@@ -16,3 +16,7 @@ l.append(b)
 b[0]=4
 
 print(l)
+
+import hashlib
+result = hashlib.md5("abcdef609043".encode())
+print(result.hexdigest())

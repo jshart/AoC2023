@@ -45,7 +45,7 @@ class Map:
                     unprocessed[0]=unprocessed[0]+delta
                     unprocessed[1]=unprocessed[1]+delta
                     mappedInput.append([unprocessed[0],unprocessed[1]])
-                    print("---> Complete overlap")
+                    print("---> Completely inside")
                 elif startInsideRange:
                     # This means that the start is inside the source range,
                     # but the end is outside the sorce range. So we need
@@ -69,6 +69,14 @@ class Map:
                     #right (end) half overlaps, so gets mapped to dest range
                     mappedInput.append([destRange1,unprocessed[1]+delta])
                     print("---> Partial overlap: end")
+                elif unprocessed[0]<sourceRange1 and unprocessed[1]>sourceRange2:
+                    # this means the input range completely overlaps the source range
+                    # so we need to break the input range into three parts, left (pass through),
+                    # middle (mapped), right (pass through)
+                    unmappedInput.append([unprocessed[0],sourceRange1-1])
+                    mappedInput.append([destRange1,destRange2])
+                    unmappedInput.append([sourceRange2+1,unprocessed[1]])
+                    print("---> Complete overlap")
 
             if len(unmappedInput)>0:
                 stillToProcess.clear()

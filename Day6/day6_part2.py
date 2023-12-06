@@ -5,4 +5,6 @@ distance=212206012011044
 #distance=940200
 winCounts=[]
 
+
+# https://www.wolframalpha.com/input?i=solve+d%3D%28t-b%29*b+for+b
 print(distance)

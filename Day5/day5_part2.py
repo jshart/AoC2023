@@ -12,68 +12,70 @@ class Map:
 
     def splitRanges(self,inputRange):
         outputRange=[]
+        mappedInput=[]
+        unmappedInput=[]
+        stillToProcess=[]
 
-        rangeCollisionFound=False
+        # Add the input ange to the unmappedInput list
+        stillToProcess.append(inputRange)
+
         for mapRange in self.ranges:
-            print("----> Testing Range:"+str(mapRange[0])+" "+str(mapRange[1])+" "+str(mapRange[2]))
-            sourceRange1=mapRange[1]
-            sourceRange2=mapRange[1]+mapRange[2]
-            destRange1=mapRange[0]
-            destRange2=mapRange[0]+mapRange[2]
-            delta=mapRange[0]-mapRange[1]
+            for unprocessed in stillToProcess:
+                print("----> Testing Range:"+str(mapRange[0])+" "+str(mapRange[1])+" "+str(mapRange[2]))
+                sourceRange1=mapRange[1]
+                sourceRange2=mapRange[1]+mapRange[2]
+                destRange1=mapRange[0]
+                destRange2=mapRange[0]+mapRange[2]
+                delta=mapRange[0]-mapRange[1]
 
-            startInsideRange=False
-            endInsideRange=False
+                startInsideRange=False
+                endInsideRange=False
 
-            # check if the input start is inside the source range
-            if inputRange[0]>=sourceRange1 and inputRange[0]<=sourceRange2:
-                startInsideRange=True
-            
-            # check if the input end is inside the source range
-            if inputRange[1]>=sourceRange1 and inputRange[1]<=sourceRange2:
-                endInsideRange=True
+                # check if the input start is inside the source range
+                if unprocessed[0]>=sourceRange1 and unprocessed[0]<=sourceRange2:
+                    startInsideRange=True
                 
-            if startInsideRange and endInsideRange:
-                # Entire input is inside the source range
-                # so we just adjust the entire range by the delta
-                inputRange[0]=inputRange[0]+delta
-                inputRange[1]=inputRange[1]+delta
-                outputRange.append([inputRange[0],inputRange[1]])
-                rangeCollisionFound=True
-                print("---> Complete overlap")
-            elif startInsideRange:
-                # This means that the start is inside the source range,
-                # but the end is outside the sorce range. So we need
-                # to split the input range into two parts.
+                # check if the input end is inside the source range
+                if unprocessed[1]>=sourceRange1 and unprocessed[1]<=sourceRange2:
+                    endInsideRange=True
+                    
+                if startInsideRange and endInsideRange:
+                    # Entire input is inside the source range
+                    # so we just adjust the entire range by the delta
+                    unprocessed[0]=unprocessed[0]+delta
+                    unprocessed[1]=unprocessed[1]+delta
+                    mappedInput.append([unprocessed[0],unprocessed[1]])
+                    print("---> Complete overlap")
+                elif startInsideRange:
+                    # This means that the start is inside the source range,
+                    # but the end is outside the sorce range. So we need
+                    # to split the input range into two parts.
 
-                #left (start) half overlaps, so gets mapped to dest range
-                outputRange.append([inputRange[0]+delta,destRange2])
+                    #left (start) half overlaps, so gets mapped to dest range
+                    mappedInput.append([unprocessed[0]+delta,destRange2])
 
-                #right (end) half does not overlap, so gets "passed through"
-                outputRange.append([sourceRange2+1,inputRange[1]])
-                rangeCollisionFound=True
-                print("---> Partial overlap: start")
-            elif endInsideRange:
-                # This means that the end is inside the source range,
-                # but the start is outside the source range. So we need
-                # to split the input range into two parts.
+                    #right (end) half does not overlap, so gets "passed through"
+                    unmappedInput.append([sourceRange2+1,unprocessed[1]])
+                    print("---> Partial overlap: start")
+                elif endInsideRange:
+                    # This means that the end is inside the source range,
+                    # but the start is outside the source range. So we need
+                    # to split the input range into two parts.
 
 
-                #left (start) half does not overlap, so gets "passed through"
-                outputRange.append([inputRange[0],sourceRange1-1])
-                
-                #right (end) half overlaps, so gets mapped to dest range
-                outputRange.append([destRange1,inputRange[1]+delta])
-                rangeCollisionFound=True
-                print("---> Partial overlap: end")
+                    #left (start) half does not overlap, so gets "passed through"
+                    unmappedInput.append([unprocessed[0],sourceRange1-1])
+                    
+                    #right (end) half overlaps, so gets mapped to dest range
+                    mappedInput.append([destRange1,unprocessed[1]+delta])
+                    print("---> Partial overlap: end")
 
-        if rangeCollisionFound==False:
-            # This means that there was no range collision, so we just
-            # pass through the input range
-            outputRange.append(inputRange)
-            print("---> No overlap")
+            if len(unmappedInput)>0:
+                stillToProcess.clear()
+                stillToProcess=unmappedInput.copy()
+                unmappedInput.clear()
 
-        return(outputRange)
+        return(mappedInput+stillToProcess)
 
     def printMap(self):
         print("S.Map: ",self.name)
@@ -158,7 +160,6 @@ for m in maps:
 
 currentSeedRanges=[]
 newListOfRanges=[]
-nextSetOfRanges=[]
 
 print("---------------- END OF LOAD ---------------")
 print("Starting Seeds:")
@@ -181,7 +182,6 @@ for s in startingSeeds:
 
         fetchedMap=maps[tabPointer]
         print("--> Fetching:",tabPointer)
-        nextSetOfRanges.clear()
 
         for p in currentSeedRanges:
             print("--> Calling split with:",end="")
@@ -192,10 +192,9 @@ for s in startingSeeds:
             for a in newListOfRanges:
                 print(a,end=" ")
             print()
-            nextSetOfRanges=nextSetOfRanges+newListOfRanges.copy()
 
         currentSeedRanges.clear()
-        currentSeedRanges=nextSetOfRanges.copy()
+        currentSeedRanges=newListOfRanges.copy()
 
         #move the pointer to the next map
         tabPointer=fetchedMap.to

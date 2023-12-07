@@ -12,6 +12,9 @@ class HandSorter:
         for h in self.hands:
             h.print()
 
+    def sort(self):
+        self.hands.sort()
+
 # This enum allows us to track the Hand Category
 class HandCategory(Enum):
     Undefined = 0
@@ -27,13 +30,16 @@ class CardHand:
     def __init__(self,line):
         parts=line.split(' ')
         self.card=parts[0]
-        self.rank=parts[1]
+        self.bid=parts[1]
         self.count=self.countLetters()
         self.handCat=self.category()
 
+    def __lt__(self,other):
+        return self.card<other.card
+
     def print(self):
         print("p----------------------q")
-        print(self.card,self.rank)
+        print(self.card,self.bid)
         print(self.count)
         print(self.handCat)
         print("b----------------------d")
@@ -48,16 +54,6 @@ class CardHand:
             else:
                 count[c]=1
         return count
-    
-    def cardValue(self,card):
-        if card=='K':
-            return(13)
-        if card=='Q':
-            return(12)
-        if card=='J':
-            return(11)
-        else:
-            return(int(card))
     
     # This function puts the hand into a category
     # based on the letters in the card and if they fall
@@ -74,41 +70,53 @@ class CardHand:
         # Two pair, where two cards share one label, two other cards share a second label, and the remaining card has a third label: 23432
         # One pair, where two cards share one label, and the other three cards have a different label from the pair and each other: A23A4
         # High card, where all cards' labels are distinct: 23456
+        fiveFound=False
+        fourFound=False
+        threeFound=False
+        twoFound=False
+        pairs=0
         for i in self.count:
             if self.count[i]==5:
-                cat=HandCategory.FiveOfAKind
-                break
+                fiveFound=True
             elif self.count[i]==4:
-                cat=HandCategory.FourOfAKind
-                break
+                fourFound=True
             elif self.count[i]==3:
-                cat=HandCategory.ThreeOfAKind
-                break
-        
-        if cat==HandCategory.Undefined:
-            # lets check how many 2-pairs we have
-            pairs=0
-            for i in self.count:
-                if self.count[i]==2:
-                    pairs+=1
-            if pairs==2:
-                cat=HandCategory.TwoPair
-            elif pairs==1:
-                cat=HandCategory.OnePair
-            else:
-                cat=HandCategory.HighCard
+                threeFound=True
+            elif self.count[i]==2:
+                twoFound=True
+                pairs+=1
+
+        if fiveFound:
+            cat=HandCategory.FiveOfAKind
+        elif fourFound:
+            cat=HandCategory.FourOfAKind
+        elif threeFound and twoFound:
+            cat=HandCategory.FullHouse
+        elif threeFound:
+            cat=HandCategory.ThreeOfAKind
+        elif twoFound and pairs==2:
+            cat=HandCategory.TwoPair
+        elif twoFound and pairs==1:
+            cat=HandCategory.OnePair
+        else:
+            cat=HandCategory.HighCard
+
         return(cat)
 
 # load a text file
 # read file input.txt into an array of strings
-file1 = open('Day7/data/input_test.txt', 'r')
+file1 = open('Day7/data/input.txt', 'r')
 lines = file1.readlines()
 
 cards=[]
 
 # Lets  clean up the input data
-for c in enumerate(lines):
-    lines[c[0]]=lines[c[0]].strip()
+for c,l in enumerate(lines):
+    lines[c]=lines[c].strip()
+    # Replace K with Z, so we can do an alphabetical < or > and it actually make sense
+    lines[c]=lines[c].replace("K","X")
+    lines[c]=lines[c].replace("A","Z")
+    lines[c]=lines[c].replace("T","B")
 
 # then we load the data into the card class ready to score games
 for l in lines:
@@ -136,5 +144,18 @@ for c in cards:
 print("******* Hand Categories sorted, grouped as")
 
 for h in handSorter:
+    h.sort()
     h.print()
-    print()
+
+
+print("******* two phase sorting done, now printing in order")
+
+sum=0
+rank=0
+for h in handSorter:
+    for c in h.hands:
+        rank+=1
+        print(c.card)
+        sum+=(rank*int(c.bid))
+
+print("Sum:"+str(sum))

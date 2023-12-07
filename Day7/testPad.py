@@ -1,22 +1,7 @@
-mylist = [1,2,3,4,5]
+str1="zqa"
+str2="zqb"
 
-for num in mylist:
-    print(num)
-
-    if num==5:
-        mylist.append(6)
-        mylist.remove(5)
-        
-l=[]
-
-b=[1,2]
-
-l.append(b)
-
-b[0]=4
-
-print(l)
-
-import hashlib
-result = hashlib.md5("abcdef609043".encode())
-print(result.hexdigest())
+if str1>str2:
+    print(str1)
+else:
+    print(str2) 

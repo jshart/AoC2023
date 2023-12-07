@@ -1,15 +1,27 @@
 from enum import Enum
 
+class HandSorter:
+    def __init__(self,hCat):
+        self.hands=[]
+        self.handCat=hCat
+
+    def print(self):
+        print("Hands of type:"+self.handCat.name)
+        if len(self.hands)==0:
+            print("   [No hands]")
+        for h in self.hands:
+            h.print()
+
 # This enum allows us to track the Hand Category
 class HandCategory(Enum):
     Undefined = 0
-    FiveOfAKind = 7
-    FourOfAKind = 6
-    FullHouse = 5
-    ThreeOfAKind = 4
-    TwoPair = 3
-    OnePair = 2
     HighCard = 1
+    OnePair = 2
+    TwoPair = 3
+    ThreeOfAKind = 4
+    FullHouse = 5
+    FourOfAKind = 6
+    FiveOfAKind = 7
 
 class CardHand:
     def __init__(self,line):
@@ -20,10 +32,11 @@ class CardHand:
         self.handCat=self.category()
 
     def print(self):
+        print("p----------------------q")
         print(self.card,self.rank)
         print(self.count)
         print(self.handCat)
-
+        print("b----------------------d")
 
     # This function creates a count of each
     # different type of letter in the card.
@@ -51,6 +64,8 @@ class CardHand:
     # into
     def category(self):
         cat=HandCategory.Undefined
+
+        # TODO - Need to implement "full house"
 
         # Five of a kind, where all five cards have the same label: AAAAA
         # Four of a kind, where four cards have the same label and one card has a different label: AA8AA
@@ -91,15 +106,35 @@ lines = file1.readlines()
 
 cards=[]
 
-# Lets just clean up the input data and dump it to terminal
-# so we know it loaded ok.
+# Lets  clean up the input data
 for c in enumerate(lines):
     lines[c[0]]=lines[c[0]].strip()
-    cards.append(CardHand(lines[c[0]]))
 
-sum=0
+# then we load the data into the card class ready to score games
+for l in lines:
+    cards.append(CardHand(l))
+    print(cards[-1].print())
+
+print("******* Card loading, complete, now sorting and organising")
+
+# Lets create a helper class to sort the hands of the same
+# type into subcategories, to make the scoring easier.
+handSorter=[]
+for type in HandCategory:
+    handSorter.append(HandSorter(type))
+for h in handSorter:
+    h.print()
+
+print("******* Hand Categories constructed, now sorting hands")
+
+# For each hand lets add them to the right sorter object
+# so they are all grouped by hand type
 for c in cards:
-    c.print()
+    print("--> Processing card:"+c.card)
+    handSorter[c.handCat.value].hands.append(c)
 
+print("******* Hand Categories sorted, grouped as")
 
-
+for h in handSorter:
+    h.print()
+    print()

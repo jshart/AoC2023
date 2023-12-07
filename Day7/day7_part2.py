@@ -106,14 +106,19 @@ class CardHand:
                 # as the 4 jokers can just match the one other remaining card
                 cat=HandCategory.FiveOfAKind
             elif j==3:
-                # if we have 3 or 2 of a kind we can upgrade to five of a kind
-                if threeFound or twoFound:
+                # if we found a pair we can use the 3 jokers to upgrade to a five
+                # of a kind
+                if twoFound:
                     cat=HandCategory.FiveOfAKind
+                else:
+                    # The other 2 digits must be different, so we can match one
+                    # to the 3 jokers to upgrade to a four of a kind
+                    cat=HandCategory.FourOfAKind
             elif j==2:
-                # if we have three of a kind we can upgrade to a full house, by
-                # using the jokers as a pair
+                # if we have three of a kind we can upgrade to 5 of a kind by
+                # combining the 2 jokers with the 3 of a kind
                 if threeFound:
-                    cat=HandCategory.FullHouse
+                    cat=HandCategory.FiveOfAKind
                 elif twoFound:
                     # if we have two of a kind we can upgrade to a four of a kind
                     cat=HandCategory.FourOfAKind
@@ -127,7 +132,7 @@ class CardHand:
                     # if we have a four of a kind, we can upgrade to a five of a kind
                     cat=HandCategory.FiveOfAKind
                 elif threeFound:
-                    # if we have a three of a kind, we can upgrade to a full house
+                    # if we have a three of a kind, we can upgrade to four of a kind
                     cat=HandCategory.FourOfAKind
                 elif twoFound:
                     # we found at least one pair, but if we have 2 pairs we can upgrade
@@ -140,7 +145,22 @@ class CardHand:
                         cat=HandCategory.ThreeOfAKind
                 else:
                     # no pairs were found, so we can only upgrade to a two pair
+                    cat=HandCategory.OnePair
+        else:
+                if fiveFound:
+                    cat=HandCategory.FiveOfAKind
+                elif fourFound:
+                    cat=HandCategory.FourOfAKind
+                elif threeFound and twoFound:
+                    cat=HandCategory.FullHouse
+                elif threeFound:
+                    cat=HandCategory.ThreeOfAKind
+                elif twoFound and pairs==2:
                     cat=HandCategory.TwoPair
+                elif twoFound and pairs==1:
+                    cat=HandCategory.OnePair
+                else:
+                    cat=HandCategory.HighCard
 
         return(cat)
 
@@ -204,3 +224,5 @@ print("Sum:"+str(sum))
 
 
 #248568809 too low
+#248758526 too low
+#249396969 too low

@@ -85,10 +85,14 @@ print("All Z's found after:"+str(steps))
 
 print(minZ)
 r=0
-il=len(instructions)
-for z in minZ:
-    r=z % il
-    print(r)
 
-#118200000000
-#23355229540361858900885867
+il=len(instructions)
+total=il
+for z in minZ:
+    r=z / il
+    print(str(z)+" "+str(il)+" "+str(r))
+    total=total*r
+
+print(total)
+
+# answer is 14321394058031

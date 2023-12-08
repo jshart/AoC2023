@@ -1,20 +1,5 @@
 from enum import Enum
 
-class HandSorter:
-    def __init__(self,hCat):
-        self.hands=[]
-        self.handCat=hCat
-
-    def print(self):
-        print("Hands of type:"+self.handCat.name)
-        if len(self.hands)==0:
-            print("   [No hands]")
-        for h in self.hands:
-            h.print()
-
-    def sort(self):
-        self.hands.sort()
-
 # load a text file
 # read file input.txt into an array of strings
 file1 = open('Day8/data/input.txt', 'r')

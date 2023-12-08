@@ -1,19 +1,5 @@
 from enum import Enum
 
-class HandSorter:
-    def __init__(self,hCat):
-        self.hands=[]
-        self.handCat=hCat
-
-    def print(self):
-        print("Hands of type:"+self.handCat.name)
-        if len(self.hands)==0:
-            print("   [No hands]")
-        for h in self.hands:
-            h.print()
-
-    def sort(self):
-        self.hands.sort()
 
 # load a text file
 # read file input.txt into an array of strings
@@ -43,30 +29,66 @@ for l in lines:
 print(map)
 print("**** Map loaded and formatted")
 
+currentNodes=[]
+
+for k in map:
+    if (k[2]=='A'):
+        currentNodes.append(k)
+
+print("Starting Node List:",end="")
+print(currentNodes)
+
 zFound=False
-currentNode="AAA"
 insPtr=0
 steps=0
 
+minZ=[0,0,0,0,0,0]
+
 while not zFound:
-    print("Looking at:"+currentNode,end="")
-    left,right=map[currentNode]
-    print("  Left:"+left,end="")
-    print("  Right:"+right)
 
+    # Instruction processing is the same for all threads
     instruction=instructions[insPtr]
-    print("Instruction:"+instruction)
+    #print("Instruction:"+instruction)
     steps+=1
-
     insPtr+=1
     if insPtr>=len(instructions):
         insPtr=0
 
-    if instruction=="L":
-        currentNode=left
-    elif instruction=="R":
-        currentNode=right
+    # Assume we've ended until the code tells us otherwise
+    zFound=True
+    for i,currentNode in enumerate(currentNodes):
+       
+        #print("Looking at:"+currentNode,end="")
+        left,right=map[currentNode]
+        #print("  Left:"+left,end="")
+        #print("  Right:"+right)
 
-    if currentNode=="ZZZ":
-        zFound=True
-        print("ZZZ found after:"+str(steps))
+        if instruction=="L":
+            currentNodes[i]=left
+        elif instruction=="R":
+            currentNodes[i]=right
+
+        if currentNodes[i][2] !="Z":
+            pass
+        else:
+            minZ[i]=steps
+
+    for z in minZ:
+        if z==0:
+            zFound=False
+            break
+
+    if steps % 1000000 == 0:
+        print("Steps:"+str(steps))
+
+print("All Z's found after:"+str(steps))
+
+print(minZ)
+r=0
+il=len(instructions)
+for z in minZ:
+    r=z % il
+    print(r)
+
+#118200000000
+#23355229540361858900885867

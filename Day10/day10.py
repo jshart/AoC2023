@@ -2,7 +2,7 @@ from enum import Enum
 
 # load a text file
 # read file input.txt into an array of strings
-file1 = open('Day10/data/input_test.txt', 'r')
+file1 = open('Day10/data/input.txt', 'r')
 lines = file1.readlines()
 
 # Here are the types of pipe connections
@@ -115,12 +115,10 @@ while not done and maxLoops>0:
 
     for y,l in enumerate(map):
         for x,c in enumerate(l):
-            # whats our boundary for this (UNUSED atm, but keeping here in case these are useful)
-            checkXStart = x-1 if x>0 else x
-            checkXEnd = x+1 if x<len(l)-1 else x
-            checkYStart = y-1 if y>0 else y
-            checkYEnd = y+1 if y<len(lines)-1 else y
-
+            # keep track of the start location once we find it
+            if c=="S":
+                startX=x
+                startY=y
 
             # which cells do we need to check for a valid
             # pipe connection based on this type?
@@ -132,9 +130,6 @@ while not done and maxLoops>0:
             matrix={}
             for d in allowedDirections:
                 matrix[d]=False
-
-            #print(c,end=" ")
-            #print(matrix, end=" -> ")
 
             # Based on the possible directions, lets check *EACH* if both sides of the
             # pipe see this as a legit connection
@@ -151,8 +146,6 @@ while not done and maxLoops>0:
                 if connectForward(map[y][x],"W") and connectBackward(map[y][x-1],"E"):
                     matrix["W"]=True
 
-            #print(matrix)
-
             goodConnection=True
             for m in matrix:
                 if matrix[m]==False:
@@ -163,8 +156,31 @@ while not done and maxLoops>0:
             # reset it. We also treat S as an always valid space.
             if map[y][x]!="." and map[y][x]!="S":
                 if not goodConnection:
-                    #print("Replacing at:"+str(x)+","+str(y)+" with .")
                     map[y][x]="."
                     done=False
 
     printMap(map,"END STATE")
+
+print("**** Pruning complete, start location at:"+str(startX)+","+str(startY))
+
+checkXStart = startX-1 if startX>0 else startX
+checkXEnd = startX+1 if startX<len(l)-1 else startX
+checkYStart = startY-1 if startY>0 else startY
+checkYEnd = startY+1 if startY<len(lines)-1 else startY
+
+print("**** Checking for pipes in range:"+str(checkXStart)+","+str(checkYStart)+" to "+str(checkXEnd)+","+str(checkYEnd))
+print("**** Lines:"+str(len(lines))+" Columns:"+str(len(l)))
+
+print("**** Checking X for range:"+str(checkXStart)+" to "+str(checkXEnd+1))
+for i in range(checkXStart,checkXEnd+1):
+    print("+-- Checking for pipe at:"+str(i)+","+str(startY))
+    if map[startY][i]!="S":
+        if map[startY][i]!=".":
+            print("  + Found a pipe at:"+str(i)+","+str(startY)+"= "+map[startY][i])
+
+print("**** Checking Y")
+for j in range(checkYStart,checkYEnd+1):
+    print("+-- Checking for pipe at:"+str(startX)+","+str(j))
+    if map[j][startX]!="S":
+        if map[j][startX]!=".":
+            print("  + Found a pipe at:"+str(startX)+","+str(j)+"= "+map[j][startX])

@@ -243,6 +243,11 @@ while not done:
         elif directions=="W":
             path.append([p[0],p[1]-1,"E"])
 
+# Lets "highligt" the path so we can see it better
+for p in path:
+    map[p[0]][p[1]]="#"
+
+printMap(map,"LOOP PATH")
 
 # print("**** Checking X for range:"+str(checkXStart)+" to "+str(checkXEnd+1))
 # for i in range(checkXStart,checkXEnd+1):

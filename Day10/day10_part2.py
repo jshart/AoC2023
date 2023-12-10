@@ -244,8 +244,8 @@ while not done:
             path.append([p[0],p[1]-1,"E"])
 
 # Lets "highligt" the path so we can see it better
-for p in path:
-    map[p[0]][p[1]]="#"
+# for p in path:
+#     map[p[0]][p[1]]="#"
 
 printMap(map,"LOOP PATH")
 
@@ -262,3 +262,117 @@ printMap(map,"LOOP PATH")
 #     if map[j][startX]!="S":
 #         if map[j][startX]!=".":
 #             print("  + Found a pipe at:"+str(startX)+","+str(j)+"= "+map[j][startX])
+
+
+import pygame, sys, random
+from pygame.locals import *
+pygame.init()
+
+# Colours
+BACKGROUND = (255, 255, 255)
+ 
+# Game Setup
+FPS = 60
+scale=5
+fpsClock = pygame.time.Clock()
+WINDOW_WIDTH = 140*scale
+WINDOW_HEIGHT = 140*scale
+ 
+WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+pygame.display.set_caption('AoC Display')
+
+
+# Render elements of the game
+WINDOW.fill(BACKGROUND)
+
+looping=True
+ # The main game loop
+while looping:
+    # Get inputs
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+
+    # Processing
+    # This section will be built out later
+
+        # Initializing Color
+    color = (255,0,0)
+    
+    # Drawing Rectangle
+
+    #TODO replace this with a map draw!
+    for y,l in enumerate(map):
+        for x,c in enumerate(l):
+            if c!=".":
+                #pygame.draw.rect(WINDOW, color, pygame.Rect((x*scale)-1, (y*scale)-1, scale-1, scale-1))
+
+                if c=="|":
+                    sx=(x*scale)+(scale/2)
+                    sy=(y*scale)
+                    ex=(x*scale)+(scale/2)
+                    ey=(y*scale)+scale
+                    pygame.draw.line(WINDOW, (0,0,0), (sx, sy), (ex, ey))
+                elif c=="-":
+                    sx=(x*scale)
+                    sy=(y*scale)+(scale/2)
+                    ex=(x*scale)+scale
+                    ey=(y*scale)+(scale/2)
+                    pygame.draw.line(WINDOW, (0,0,0), (sx, sy), (ex, ey))
+                    retval = "EW"
+                elif c=="L":
+                    sx=(x*scale)+(scale/2)
+                    sy=(y*scale)
+                    ex=(x*scale)+(scale/2)
+                    ey=(y*scale)+(scale/2)
+                    pygame.draw.line(WINDOW, (0,0,0), (sx, sy), (ex, ey))
+                    sx=(x*scale)+(scale/2)
+                    sy=(y*scale)+(scale/2)
+                    ex=(x*scale)+scale
+                    ey=(y*scale)+(scale/2)
+                    pygame.draw.line(WINDOW, (0,0,0), (sx, sy), (ex, ey))
+                    retval = "NE"
+                elif c=="J":
+                    sx=(x*scale)+(scale/2)
+                    sy=(y*scale)
+                    ex=(x*scale)+(scale/2)
+                    ey=(y*scale)+(scale/2)
+                    pygame.draw.line(WINDOW, (0,0,0), (sx, sy), (ex, ey))
+                    sx=(x*scale)+(scale/2)
+                    sy=(y*scale)+(scale/2)
+                    ex=(x*scale)
+                    ey=(y*scale)+(scale/2)
+                    pygame.draw.line(WINDOW, (0,0,0), (sx, sy), (ex, ey))
+                    retval = "NW"
+                elif c=="F":
+                    sx=(x*scale)+(scale/2)
+                    sy=(y*scale)+(scale/2)
+                    ex=(x*scale)+(scale/2)
+                    ey=(y*scale)+scale
+                    pygame.draw.line(WINDOW, (0,0,0), (sx, sy), (ex, ey))
+                    sx=(x*scale)+(scale/2)
+                    sy=(y*scale)+(scale/2)
+                    ex=(x*scale)+scale
+                    ey=(y*scale)+(scale/2)
+                    pygame.draw.line(WINDOW, (0,0,0), (sx, sy), (ex, ey))
+                    retval = "SE"
+                elif c=="7":
+                    sx=(x*scale)+(scale/2)
+                    sy=(y*scale)+(scale/2)
+                    ex=(x*scale)+(scale/2)
+                    ey=(y*scale)+scale
+                    pygame.draw.line(WINDOW, (0,0,0), (sx, sy), (ex, ey))
+                    sx=(x*scale)+(scale/2)
+                    sy=(y*scale)+(scale/2)
+                    ex=(x*scale)
+                    ey=(y*scale)+(scale/2)
+                    pygame.draw.line(WINDOW, (0,0,0), (sx, sy), (ex, ey))
+                    retval = "SW"
+                elif c=="S":
+                    retval = "NESW"
+    
+    #pygame.display.flip()
+
+    pygame.display.update()
+    fpsClock.tick(FPS)

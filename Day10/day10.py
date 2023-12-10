@@ -2,7 +2,7 @@ from enum import Enum
 
 # load a text file
 # read file input.txt into an array of strings
-file1 = open('Day10/data/input_test2.txt', 'r')
+file1 = open('Day10/data/input_test.txt', 'r')
 lines = file1.readlines()
 
 # Here are the types of pipe connections
@@ -176,27 +176,35 @@ checkYEnd = startY+1 if startY<len(lines)-1 else startY
 print("**** Checking for pipes in range:"+str(checkXStart)+","+str(checkYStart)+" to "+str(checkXEnd)+","+str(checkYEnd))
 print("**** Lines:"+str(len(lines))+" Columns:"+str(len(l)))
 
+paths=[]
+
 # Lets check each of the cardinal points in turn and see which
 # ones have a legal pipe direction to this location.
 if startY>0:
     # we are able to check the pipe to the North - does it have a south connection?
     if connectBackward(map[startY-1][startX],"S"):
         print("Start can go North")
+        paths.append([startY-1,startX,1])
 
 if startY<len(lines)-1:
     # we are able to check the pipe to the South - does it have a north connection?
     if connectForward(map[startY+1][startX],"N"):
         print("Start can go South")
+        paths.append([startY+1,startX,1])
 
 if startX>0:
     # we are able to check the pipe to the West - does it have a east connection?
     if connectBackward(map[startY][startX-1],"E"):
         print("Start can go West")
+        paths.append([startY,startX-1,1])
 
 if startX<len(l)-1:
     # we are able to check the pipe to the East - does it have a west connection?
     if connectForward(map[startY][startX+1],"W"):
         print("Start can go East")
+        paths.append([startY,startX+1,1])
+
+# TODO calculate the loop size and divide by 2
 
 
 # print("**** Checking X for range:"+str(checkXStart)+" to "+str(checkXEnd+1))

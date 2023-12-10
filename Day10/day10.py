@@ -2,7 +2,7 @@ from enum import Enum
 
 # load a text file
 # read file input.txt into an array of strings
-file1 = open('Day10/data/input.txt', 'r')
+file1 = open('Day10/data/input_test2.txt', 'r')
 lines = file1.readlines()
 
 # Here are the types of pipe connections
@@ -163,6 +163,11 @@ while not done and maxLoops>0:
 
 print("**** Pruning complete, start location at:"+str(startX)+","+str(startY))
 
+# S exists somewhere on the loop, but we dont know exactly what shape of pipe
+# exists at this location. However because we pruned all the rest of the map of
+# dead end pipes that are not part of a loop we can infer the shape of the pipe
+# based on the fact there must be exact 2 legal adjacent pipe locations.
+
 checkXStart = startX-1 if startX>0 else startX
 checkXEnd = startX+1 if startX<len(l)-1 else startX
 checkYStart = startY-1 if startY>0 else startY
@@ -171,16 +176,39 @@ checkYEnd = startY+1 if startY<len(lines)-1 else startY
 print("**** Checking for pipes in range:"+str(checkXStart)+","+str(checkYStart)+" to "+str(checkXEnd)+","+str(checkYEnd))
 print("**** Lines:"+str(len(lines))+" Columns:"+str(len(l)))
 
-print("**** Checking X for range:"+str(checkXStart)+" to "+str(checkXEnd+1))
-for i in range(checkXStart,checkXEnd+1):
-    print("+-- Checking for pipe at:"+str(i)+","+str(startY))
-    if map[startY][i]!="S":
-        if map[startY][i]!=".":
-            print("  + Found a pipe at:"+str(i)+","+str(startY)+"= "+map[startY][i])
+# Lets check each of the cardinal points in turn and see which
+# ones have a legal pipe direction to this location.
+if startY>0:
+    # we are able to check the pipe to the North - does it have a south connection?
+    if connectBackward(map[startY-1][startX],"S"):
+        print("Start can go North")
 
-print("**** Checking Y")
-for j in range(checkYStart,checkYEnd+1):
-    print("+-- Checking for pipe at:"+str(startX)+","+str(j))
-    if map[j][startX]!="S":
-        if map[j][startX]!=".":
-            print("  + Found a pipe at:"+str(startX)+","+str(j)+"= "+map[j][startX])
+if startY<len(lines)-1:
+    # we are able to check the pipe to the South - does it have a north connection?
+    if connectForward(map[startY+1][startX],"N"):
+        print("Start can go South")
+
+if startX>0:
+    # we are able to check the pipe to the West - does it have a east connection?
+    if connectBackward(map[startY][startX-1],"E"):
+        print("Start can go West")
+
+if startX<len(l)-1:
+    # we are able to check the pipe to the East - does it have a west connection?
+    if connectForward(map[startY][startX+1],"W"):
+        print("Start can go East")
+
+
+# print("**** Checking X for range:"+str(checkXStart)+" to "+str(checkXEnd+1))
+# for i in range(checkXStart,checkXEnd+1):
+#     print("+-- Checking for pipe at:"+str(i)+","+str(startY))
+#     if map[startY][i]!="S":
+#         if map[startY][i]!=".":
+#             print("  + Found a pipe at:"+str(i)+","+str(startY)+"= "+map[startY][i])
+
+# print("**** Checking Y")
+# for j in range(checkYStart,checkYEnd+1):
+#     print("+-- Checking for pipe at:"+str(startX)+","+str(j))
+#     if map[j][startX]!="S":
+#         if map[j][startX]!=".":
+#             print("  + Found a pipe at:"+str(startX)+","+str(j)+"= "+map[j][startX])

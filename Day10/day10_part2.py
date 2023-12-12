@@ -340,14 +340,10 @@ while looping:
             pygame.quit()
             sys.exit()
 
-    # Processing
-    # This section will be built out later
-
-        # Initializing Color
+    # Initializing Color
     color = (255,0,0)
     
-    # Drawing Rectangle
-
+    # Main draw loop
     for y,l in enumerate(map):
         for x,c in enumerate(l):
             if c!=".":

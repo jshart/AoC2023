@@ -1,23 +1,56 @@
 from enum import Enum
 
-def mDist(s,d):
-    sx=s[0]
-    sy=s[1]
-    dx=d[0]
-    dy=d[1]
+def mDist(s,d,exRows,exCols):
+    sx=s[1]
+    sy=s[0]
+    dx=d[1]
+    dy=d[0]
 
+    expansionFactor=1000000
+
+    # Now that we're ready to calculate  the *pre-expansion* mDist, we need to
+    # check to see if the path between this pair crosses an expansion
+    # line, if it does we need to the remember how much extra we need to add
+    # on to the mDist
+
+    extraCols=0
     if sx>dx:
         xdelta=sx-dx
+        for i in range(dx,sx):
+            if i in exCols:
+                extraCols+=1
+                print("c"+str(i),end=",")
     else:
         xdelta=dx-sx
+        for i in range(sx,dx):
+            if i in exCols:
+                extraCols+=1
+                print("c"+str(i),end=",")
 
+    xdelta-=extraCols
+    xdelta=xdelta+(extraCols*expansionFactor)
+
+    extraRows=0
     if sy>dy:
         ydelta=sy-dy
+        for i in range(dy,sy):
+            if i in exRows:
+                extraRows+=1
+                print("r"+str(i),end=",")
+
     else:
         ydelta=dy-sy
+        for i in range(sy,dy):
+            if i in exRows:
+                extraRows+=1
+                print("r"+str(i),end=",")
+
+    ydelta-=extraRows
+    ydelta=ydelta+(extraRows*expansionFactor)
 
     total=xdelta+ydelta
-    return total
+    print()
+    return (total,extraCols,extraRows)
 
 # load a text file
 # read file input.txt into an array of strings
@@ -49,6 +82,7 @@ printMap(map,"START STATE")
 # for any columns which are completely empty. If find any we need to 
 # duplicate them. We do this search backwards so that we dont mess
 # up the indexing when we insert a column
+emptyColList=[]
 for i in range(len(map[0])-1,-1,-1):
 
     # drop down this column. If we find anything other than a "."
@@ -61,9 +95,8 @@ for i in range(len(map[0])-1,-1,-1):
 
     if emptyCol==True:
         # Empty col found
-        print("Expanding at column:"+str(i))
-        for j in range(0,len(map)):
-            map[j].insert(i,".")
+        print("Empty at column:"+str(i))
+        emptyColList.append(i)
 
 printMap(map,"AFTER SPACE EXPANSION HOR")
 
@@ -71,6 +104,7 @@ printMap(map,"AFTER SPACE EXPANSION HOR")
 # by row and check if any rows are completely empty. If find any
 # we need to duplicate them.
 # Ww do this loop backwards so that we dont mess up the indexing
+emptyRowList=[]
 for i in range(len(map)-1,-1,-1):
 
     # drop down this row. If we find anything other than a "."
@@ -83,10 +117,14 @@ for i in range(len(map)-1,-1,-1):
 
     if emptyRow==True:
         # Empty row found
-        print("Expanding at row:"+str(i))
-        map.insert(i,list("."*len(map[0])))
+        print("Empty at row:"+str(i))
+        emptyRowList.append(i)
         
 printMap(map,"AFTER SPACE EXPANSION VER")
+print("Empty Cols:",end="")
+print(emptyColList)
+print("Empty Rows:",end="")
+print(emptyRowList)
 
 # Space is expanded, now we need to process the space looking for star pairs.
 # We need to iteratively look for pairs that are further apart, so we start
@@ -115,15 +153,20 @@ i=0
 c=len(starList)
 total=0
 # loop backwards through the list so that we dont mess up the indexing
+# when we prune the one that we've just completed
 for j in range(c-1,-1,-1):
     s=starList[j]
     for d in starList:
         if s!=d:
             i+=1
-            md=mDist(s,d)
+            md=mDist(s,d,emptyRowList,emptyColList)
+            # co-ords are in row/col format
             print(str(i)+" -> "+str(s)+" to "+str(d)+" = "+str(md))
-            total+=md
+            total+=md[0]
+
     starList.remove(s)
 
 
 print("Total = "+str(total))
+
+# 840989451783 - off by 10?

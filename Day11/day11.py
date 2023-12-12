@@ -21,7 +21,7 @@ def mDist(s,d):
 
 # load a text file
 # read file input.txt into an array of strings
-file1 = open('Day11/data/input.txt', 'r')
+file1 = open('Day11/data/input_test.txt', 'r')
 lines = file1.readlines()
 
 def printMap(lines,msg):

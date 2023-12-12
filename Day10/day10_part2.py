@@ -38,6 +38,22 @@ def connectsTo(c):
 
     return retval
 
+def reverseEngineerPipe(d):
+    d1=d[0]
+    d2=d[1]
+    if d1 in "NS" and d2 in "NS":
+        return "|"
+    elif d1 in "EW" and d2 in "EW":
+        return "-"
+    elif d1 in "NE" and d2 in "NE":
+        return "L"
+    elif d1 in "NW" and d2 in "NW":
+        return "J"
+    elif d1 in "SE" and d2 in "SE":
+        return "F"
+    elif d1 in "SW" and d2 in "SW":
+        return "7"
+
 def connectForward(c,direction):
     validConnection=False
 
@@ -178,6 +194,7 @@ print("**** Lines:"+str(len(lines))+" Columns:"+str(len(l)))
 
 path=[]
 possiblePaths=[]
+sShapeCandidates=""
 
 # Lets check each of the cardinal points in turn and see which
 # ones have a legal pipe direction to this location.
@@ -186,26 +203,33 @@ if startY>0:
     if connectBackward(map[startY-1][startX],"S"):
         print("Start can go North")
         possiblePaths.append([startY-1,startX,"S"])
+        sShapeCandidates+="N"
 
 if startY<len(lines)-1:
     # we are able to check the pipe to the South - does it have a north connection?
     if connectForward(map[startY+1][startX],"N"):
         print("Start can go South")
         possiblePaths.append([startY+1,startX,"N"])
+        sShapeCandidates+="S"
 
 if startX>0:
     # we are able to check the pipe to the West - does it have a east connection?
     if connectBackward(map[startY][startX-1],"E"):
         print("Start can go West")
         possiblePaths.append([startY,startX-1,"E"])
+        sShapeCandidates+="W"
 
 if startX<len(l)-1:
     # we are able to check the pipe to the East - does it have a west connection?
     if connectForward(map[startY][startX+1],"W"):
         print("Start can go East")
         possiblePaths.append([startY,startX+1,"W"])
+        sShapeCandidates+="E"
 
 print(possiblePaths)
+
+sShape=reverseEngineerPipe(sShapeCandidates)
+print("Expected S Shape is: ["+sShape+"]")
 
 # OK we've identified some possible paths to the end of the loop.
 # lets just pick the first one and head off until we come back.
@@ -248,6 +272,28 @@ while not done:
 #     map[p[0]][p[1]]="#"
 
 printMap(map,"LOOP PATH")
+
+# Lets substitute the S character
+map[startY][startX]=sShape
+
+# OK, now that we're done with identifing the map of the path and getting rid of everything
+# else, we need to complete part2 by identifying the true empty space within the loop
+insideLoop=False
+emptySpaces=0
+for y,l in enumerate(map):
+    for x,c in enumerate(l):
+        if c in "-F7":
+            #ignore
+            pass
+        elif not insideLoop and c in "|LJ":
+            insideLoop=True
+        elif insideLoop and c in "|LJ":
+            insideLoop=False
+        elif insideLoop:
+            emptySpaces+=1
+            map[y][x]="@"
+
+print("Empty spaces in loop:"+str(emptySpaces))
 
 # print("**** Checking X for range:"+str(checkXStart)+" to "+str(checkXEnd+1))
 # for i in range(checkXStart,checkXEnd+1):
@@ -302,7 +348,6 @@ while looping:
     
     # Drawing Rectangle
 
-    #TODO replace this with a map draw!
     for y,l in enumerate(map):
         for x,c in enumerate(l):
             if c!=".":
@@ -371,6 +416,9 @@ while looping:
                     retval = "SW"
                 elif c=="S":
                     retval = "NESW"
+                elif c=="@":
+                    pygame.draw.rect(WINDOW, color, pygame.Rect((x*scale)-1, (y*scale)-1, scale-1, scale-1))
+
     
     #pygame.display.flip()
 

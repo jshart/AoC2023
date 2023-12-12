@@ -2,7 +2,7 @@ from enum import Enum
 
 # load a text file
 # read file input.txt into an array of strings
-file1 = open('Day10/data/input.txt', 'r')
+file1 = open('Day10/data/input_test4.txt', 'r')
 lines = file1.readlines()
 
 # Here are the types of pipe connections

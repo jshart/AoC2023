@@ -75,11 +75,13 @@ for m in map:
                 maskSubIndex+=1
             else:
                 candidate+=c
+        #if candidate not in candidates:
         candidates.append(candidate)
 
     print("Final set of candidate strings for:"+m[0]+" is:")
     #print(candidates)
 
+    goodCandidates=[]
     # lets check the candidates to see which ones meet our criteria
     for candidate in candidates:
         parts = candidate.split('.')
@@ -89,6 +91,8 @@ for m in map:
             if len(p)<1:
                 continue
             if p[0]=='#':
+                # have we exceeded the expect count of damaged spring
+                # areas? if so then we know ths is bad.
                 if damagedSpringCount>=len(m[1]):
                     badMatch=True
                     break
@@ -109,13 +113,18 @@ for m in map:
 
         if not badMatch:
             # Looks good, lets print this as a good candidate
-            print("Good candidate: "+candidate,end="")
+            print("Good candidate: "+candidate+" damaged areas found:"+str(damagedSpringCount),end="")
             if candidate.count('#')==guideTotal:
                 print(" (PASSED cross check)")
             else:
                 print(" (FAILED cross check)")
                 exit
-            totalGoodCandidateCount+=1
+
+            if candidate not in goodCandidates:
+                goodCandidates.append(candidate)
+                totalGoodCandidateCount+=1
+            else:
+                print("Dropping as dup")
 
 print("Total masks to test="+str(totalMasksToTest))
 print("Total good candidate count="+str(totalGoodCandidateCount))
@@ -130,4 +139,7 @@ print("Total good candidate count="+str(totalGoodCandidateCount))
 # springs, so we can immediately eliminate any that have more or less than that.
 
 # Theory is probably good, but I've got some edge case causing a problem. Current output
-# is too hight (7110) as is (7100)
+# is too high (7110) as is (7100)
+# 7000 is too low
+# so its been 7000 and 7100
+# 7050,7091 is wrong

@@ -2,7 +2,7 @@ from enum import Enum
 
 # load a text file
 # read file input.txt into an array of strings
-file1 = open('Day12/data/input.txt', 'r')
+file1 = open('Day12/data/input_test.txt', 'r')
 lines = file1.readlines()
 
 map=[]
@@ -13,7 +13,9 @@ for unknownSpringConditionCount,l in enumerate(lines):
     parts=lines[unknownSpringConditionCount].split(' ')
     guide=parts[1].split(',')
 
-    map.append([parts[0],guide])
+    map.append([parts[0]*5,guide*5])
+    #map.append([parts[0],guide])
+
 
 for m in map:
     print(m)
@@ -39,12 +41,20 @@ for m in map:
 
     # Create a max binary mask size from this
     maxMaskSize=(1<<unknownSpringConditionCount)
+    minMaskSize=maxMaskSize>>1
 
     print(" unknown="+str(unknownSpringConditionCount)+" Max Mask Size="+str(maxMaskSize),end=" Masks:")
 
     masks=[]
+    candidates=[]
+    goodCandidates=[]
+
+    # TODO - can we optimise this by starting i at a higher position and skipping most of the known
+    # smaller/bad masks
+
     # for each possible mask permuation lets generate a mask
-    for i in range(maxMaskSize+1):
+    #for i in range(minMaskSize,maxMaskSize+1):
+    for i in range(0,maxMaskSize+1):
 
         # Convert this index to an actual binary number and strip the 0b prefix
         b=bin(i)[2:]
@@ -55,33 +65,21 @@ for m in map:
         #print("["+b+"]",end="")
         totalMasksToTest+=1
         masks.append(b)
-    print("["+masks[0]+"]...["+masks[-1]+"]")
 
-    # Next we need to complete the unknowns in the input string using the masks we just generated
-    # in order to create a series of candidate strings which we can then test the numeric guide
-    # against to see if they are valid
-    candidates=[]
-    for mask in masks:
+#print("["+masks[0]+"]...["+masks[-1]+"]")
         candidate=""
         maskSubIndex=0
         for c in m[0]:
-            if c=='?' and mask[maskSubIndex]=='0':
+            if c=='?' and b[maskSubIndex]=='0':
                 candidate+="#"
                 maskSubIndex+=1
-            elif c=='?' and mask[maskSubIndex]=='1':
+            elif c=='?' and b[maskSubIndex]=='1':
                 candidate+='.'
                 maskSubIndex+=1
             else:
                 candidate+=c
-        #if candidate not in candidates:
-        candidates.append(candidate)
 
-    print("Final set of candidate strings for:"+m[0]+" is:")
-    #print(candidates)
 
-    goodCandidates=[]
-    # lets check the candidates to see which ones meet our criteria
-    for candidate in candidates:
         parts = candidate.split('.')
         damagedSpringCount=0
         badMatch=False

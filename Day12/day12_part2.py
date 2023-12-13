@@ -13,8 +13,8 @@ for unknownSpringConditionCount,l in enumerate(lines):
     parts=lines[unknownSpringConditionCount].split(' ')
     guide=parts[1].split(',')
 
-    #map.append([parts[0]*5,guide*5])
-    map.append([parts[0],guide])
+    map.append([parts[0]*5,guide*5])
+    #map.append([parts[0],guide])
 
 
 for m in map:
@@ -64,6 +64,8 @@ for m in map:
             b=b.zfill(unknownSpringConditionCount)
 
         # TODO - based on the number of 0s and 1s in the mask, can we filter out anything that could never match this the numeric guides?
+        if (b.count('0')+knownBadSpringConditionCount)!=guideTotal:
+            continue
 
         #print("["+b+"]",end="")
         totalMasksToTest+=1

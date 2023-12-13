@@ -7,6 +7,20 @@ lines = file1.readlines()
 
 map=[]
 
+
+# TODO - see if these 2 functions, function as designed :D
+def compareRows(map,i,j):
+    if map[i] == map[j]:
+        return True
+    return False
+
+def compareCols(map,i,j):
+    for k in range(len(map)):
+        if map[k][i] == map[k][j]:
+            return True
+            
+    return False
+
 def checkRepeatedRow(map):
     for i in range(len(map)):
         if map[i] == map[i+1]:

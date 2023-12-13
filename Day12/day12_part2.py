@@ -54,6 +54,7 @@ for m in map:
 
     # for each possible mask permuation lets generate a mask
     #for i in range(minMaskSize,maxMaskSize+1):
+    print("Mask Size:"+str(maxMaskSize)+" Unknown Spring count:"+str(unknownSpringConditionCount)+" Guide Count:"+str(guideTotal))
     for i in range(0,maxMaskSize+1):
 
         # Convert this index to an actual binary number and strip the 0b prefix
@@ -61,6 +62,8 @@ for m in map:
 
         if len(b)<unknownSpringConditionCount:
             b=b.zfill(unknownSpringConditionCount)
+
+        # TODO - based on the number of 0s and 1s in the mask, can we filter out anything that could never match this the numeric guides?
 
         #print("["+b+"]",end="")
         totalMasksToTest+=1

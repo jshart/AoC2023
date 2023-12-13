@@ -13,8 +13,8 @@ for unknownSpringConditionCount,l in enumerate(lines):
     parts=lines[unknownSpringConditionCount].split(' ')
     guide=parts[1].split(',')
 
-    map.append([parts[0]*5,guide*5])
-    #map.append([parts[0],guide])
+    #map.append([parts[0]*5,guide*5])
+    map.append([parts[0],guide])
 
 
 for m in map:
@@ -64,7 +64,6 @@ for m in map:
 
         #print("["+b+"]",end="")
         totalMasksToTest+=1
-        masks.append(b)
 
 #print("["+masks[0]+"]...["+masks[-1]+"]")
         candidate=""

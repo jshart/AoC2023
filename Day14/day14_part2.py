@@ -2,13 +2,14 @@ from enum import Enum
 
 # load a text file
 # read file input.txt into an array of strings
-file1 = open('Day14/data/input_test.txt', 'r')
+file1 = open('Day14/data/input.txt', 'r')
 lines = file1.readlines()
 
 class Dish:
-    def __init__(self,m):
+    def __init__(self,m,c):
         self.map=[]
         self.copyMap(m)
+        self.cycle=c
 
     def copyMap(self,m):
         for i in range(0,len(m)):
@@ -114,7 +115,7 @@ for currentCycleCount,l in enumerate(lines):
     map.append(tempMapLine)
     print(map[-1])
 
-activeDish=Dish(map)
+activeDish=Dish(map,0)
 
 print("**** DATA LOAD COMPLETE, starting run")
 print("**** INITIAL MAP - taking a copy ****")
@@ -143,11 +144,12 @@ while True:
             break
 
     if same:
-        print("**** REACHED SAME MAP **** After:"+str(currentCycleCount)+" original Map @ "+str(historyIndex))
+        print("**** REACHED SAME MAP **** After:"+str(currentCycleCount))
+        print("**** original Map @ index "+str(historyIndex)+" with a cycle count of:"+str(dishHistory[historyIndex].cycle))
         dishHistory[historyIndex].printMap()
-        unrepeatedStart=historyIndex-1
-        rangeOfRepeatedSection=currentCycleCount-unrepeatedStart
-        zoneWhichMayRepeat=cycles-unrepeatedStart
+        unrepeatedStart=dishHistory[historyIndex].cycle-1 # History undex is already 1 less than the cycle due to 0-index array
+        rangeOfRepeatedSection=currentCycleCount-(dishHistory[historyIndex].cycle)
+        zoneWhichMayRepeat=cycles-unrepeatedStart-1
 
         #TODO - this is still bugged, need to spend some more time thinking about these parts
         #TODO - I think our CycleCount beginning at 1 is messing up the indexing into history
@@ -163,7 +165,7 @@ while True:
         if currentCycleCount % 1000 == 0:
             print("**** MAP IS STILL DIFFERENT **** After:"+str(currentCycleCount))
 
-    dishHistory.append(Dish(activeDish.map))
+    dishHistory.append(Dish(activeDish.map,currentCycleCount))
 
     if currentCycleCount == cycles:
         break

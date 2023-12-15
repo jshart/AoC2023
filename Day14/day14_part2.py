@@ -108,64 +108,77 @@ map=[]
 
 
 # Lets  clean up the input data
-for c,l in enumerate(lines):
-    lines[c]=lines[c].strip()
-    tempMapLine=list(lines[c])
+for currentCycleCount,l in enumerate(lines):
+    lines[currentCycleCount]=lines[currentCycleCount].strip()
+    tempMapLine=list(lines[currentCycleCount])
     map.append(tempMapLine)
     print(map[-1])
 
-originalDish=Dish(map)
+activeDish=Dish(map)
 
 print("**** DATA LOAD COMPLETE, starting run")
 print("**** INITIAL MAP - taking a copy ****")
 originalMap=[]
-for i in range(0,len(originalDish.map)):
-    originalMap.append(originalDish.map.copy())
+for i in range(0,len(activeDish.map)):
+    originalMap.append(activeDish.map.copy())
 
 cycles=1000000000
-cycles=15
-c=0
+#cycles=15
+currentCycleCount=0
 
 dishHistory=[]
 
-print("MAP compare check:"+str(originalDish.compareMaps(originalDish.map)))
+print("MAP compare check:"+str(activeDish.compareMaps(activeDish.map)))
 
 while True:
-    originalDish.runCycle()
-    c+=1
+    activeDish.runCycle()
+    currentCycleCount+=1
     same=False
-    print("===> Running Cycle:"+str(c)+" Map score:"+str(originalDish.computeScore()))
+    print("===> Running Cycle:"+str(currentCycleCount)+" Map score:"+str(activeDish.computeScore()))
     
     # Lets check the history to see if we have a cycle
     for historyIndex,h in enumerate(dishHistory):
-        if h.compareMaps(originalDish.map):
+        if h.compareMaps(activeDish.map):
             same=True
             break
 
     if same:
-        print("**** REACHED SAME MAP **** After:"+str(c)+" original Map @ "+str(historyIndex))
+        print("**** REACHED SAME MAP **** After:"+str(currentCycleCount)+" original Map @ "+str(historyIndex))
         dishHistory[historyIndex].printMap()
-        #break
+        unrepeatedStart=historyIndex-1
+        rangeOfRepeatedSection=currentCycleCount-unrepeatedStart
+        zoneWhichMayRepeat=cycles-unrepeatedStart
+
+        #TODO - this is still bugged, need to spend some more time thinking about these parts
+        #TODO - I think our CycleCount beginning at 1 is messing up the indexing into history
+        # map, as we add stuff as a stack, so first element will be 0 and not 1
+
+        partialRepeatAtEnd=zoneWhichMayRepeat%rangeOfRepeatedSection
+        print("unrepeatedStart = "+str(unrepeatedStart),end=" ")
+        print("rangeOfRepeatedSection = "+str(rangeOfRepeatedSection),end=" ")
+        print("zoneWhichMayRepeat = "+str(zoneWhichMayRepeat),end=" ")
+        print("indexIntoRepeatedSection = "+str(partialRepeatAtEnd))
+        break
     else:
-        if c % 1000 == 0:
-            print("**** MAP IS STILL DIFFERENT **** After:"+str(c))
+        if currentCycleCount % 1000 == 0:
+            print("**** MAP IS STILL DIFFERENT **** After:"+str(currentCycleCount))
 
-    dishHistory.append(Dish(originalDish.map))
+    dishHistory.append(Dish(activeDish.map))
 
-    if c == cycles:
+    if currentCycleCount == cycles:
         break
     
 print("**** FINAL MAP ****")
-originalDish.printMap()
-print("**** Cycles Remainders:"+str(cycles%c))
-
+print("**** Checking which map we end on based on:"+str(partialRepeatAtEnd))
+finalMap=dishHistory[unrepeatedStart+partialRepeatAtEnd]
+finalMap.printMap()
 totalScore=0
 # Score the grid
-for c,m in enumerate(originalDish.map):
+for currentCycleCount,m in enumerate(finalMap.map):
     # how many rocks are in this row?
     rocks=m.count("O")
-    lineScore=rocks*(len(originalDish.map)-c)
-    print("Line "+str(c)+" has "+str(rocks)+" rocks, score="+str(lineScore))
+    lineScore=rocks*(len(finalMap.map)-currentCycleCount)
+    print("Line "+str(currentCycleCount)+" has "+str(rocks)+" rocks, score="+str(lineScore))
     totalScore+=lineScore
 
 # Print the final total score

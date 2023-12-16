@@ -12,12 +12,20 @@ class Direction(Enum):
 
 # load a text file
 # read file input.txt into an array of strings
-file1 = open('Day16/data/input_test.txt', 'r')
+file1 = open('Day16/data/input.txt', 'r')
 lines = file1.readlines()
 
 map=[]
 energyState=[]
-oldEnergyState=[]
+#oldEnergyState=[]
+
+def scoreEnergyState(e):
+    score=0
+    for r in range(len(e)):
+        for c in range(len(e[r])):
+            if e[r][c] in "#<>v^":
+                score+=1
+    return score
 
 def copyEnergyState(source, dest):
     for r in range(len(source)):
@@ -45,6 +53,21 @@ class Photon:
         self.row=startRow
         self.col=startCol
         self.direction=startDirection
+        self.history=[]
+        self.history.append((self.row,self.col,self.direction))
+
+    def resetPositionAfterSplit(self):
+        if self.direction==Direction.North:
+            self.row-=1
+        elif self.direction==Direction.East:
+            self.col+=1
+        elif self.direction==Direction.South:
+            self.row+=1
+        elif self.direction==Direction.West:
+            self.col-=1
+
+        if self.row<0 or self.row>=len(map) or self.col<0 or self.col>=len(map[0]):
+            self.direction=Direction.Stopped
 
     def printState(self,n):
         print("Thread:"+str(n)+" row: "+str(self.row)+" col: "+str(self.col)+" direction: "+str(self.direction))
@@ -56,15 +79,7 @@ class Photon:
         if self.direction==Direction.Stopped:
             return Direction.Stopped
 
-
-
-        if map[self.row][self.col]=="#":
-            # No mirror, but already energeised so just keep going
-            pass
-        elif map[self.row][self.col]==".":
-            # No mirror, and unenergised so lets energise
-            eMap[self.row][self.col]="#"
-        elif map[self.row][self.col]=="/":
+        if map[self.row][self.col]=="/":
             if self.direction==Direction.North:
                 self.direction=Direction.East
             elif self.direction==Direction.East:
@@ -116,14 +131,31 @@ class Photon:
         if self.row<0 or self.row>=len(map) or self.col<0 or self.col>=len(map[0]):
             self.direction=Direction.Stopped
         else:
-            eMap[self.row][self.col]="#"
+            state=(self.row,self.col,self.direction)
+            #print(self.history)
+            if state in self.history:
+                self.direction=Direction.Stopped
+                #print("Stopped at "+str(self.row)+","+str(self.col)+" direction: "+str(self.direction)+" Due to revisiting old position")
+            else:
+                if self.direction==Direction.North:
+                    eMap[self.row][self.col]="^"
+                elif self.direction==Direction.East:
+                    eMap[self.row][self.col]=">"
+                elif self.direction==Direction.South:
+                    eMap[self.row][self.col]="v"
+                elif self.direction==Direction.West:
+                    eMap[self.row][self.col]="<"
+                else:
+                    eMap[self.row][self.col]="#"
+
+                eMap[self.row][self.col]="#"
+                self.history.append(state)
 
 
         return returnDirection
 
 
-photons=[]
-photons.append(Photon(0,0,Direction.East))
+
 
 # Lets  clean up the input data
 for c,l in enumerate(lines):
@@ -133,9 +165,12 @@ for c,l in enumerate(lines):
 
 for r in enumerate(map):
     energyState.append(["."] * len(map[0]))
-    oldEnergyState.append(["."] * len(map[0]))
+    #oldEnergyState.append(["."] * len(map[0]))
 
 
+photons=[]
+photons.append(Photon(0,0,Direction.East))
+energyState[0][0]="#"
 
 printMap(map,"Initial State")
 print("**** DATA LOAD COMPLETE, starting run")
@@ -144,7 +179,7 @@ allStopped=False
 #for i in range(steps):
 
 run=0
-maxRuns=200
+maxRuns=1000
 allDone=False
 while not allDone:
 
@@ -152,11 +187,11 @@ while not allDone:
     # stopped threads
     for i in range(len(photons)-1,-1,-1):   
         if photons[i].direction==Direction.Stopped:
-            print("Removing thread:"+str(i))
+            #print("Removing thread as it stopped:"+str(i))
             del photons[i]
 
     # Copy Energy State
-    copyEnergyState(energyState,oldEnergyState)
+    #copyEnergyState(energyState,oldEnergyState)
 
     for threadNum,p in enumerate(photons):
         splitDirection=p.move(map,energyState)
@@ -164,24 +199,41 @@ while not allDone:
         # This is not stopped, if it is however set to a direction
         # then that means we should split the photon into two
         if splitDirection!=Direction.NoDirection:
-            print("Split, new photon:"+str(splitDirection))
+            #print("Split, new photon:"+str(splitDirection))
             newPhoton=Photon(p.row,p.col,splitDirection)
+            newPhoton.resetPositionAfterSplit()
+
+            newPhoton.history.clear()
+            for h in p.history:
+                newPhoton.history.append(h)
+
             photons.append(newPhoton)
 
-        p.printState(threadNum)
+        #p.printState(threadNum)
 
     run+=1
-    printMap(energyState,"Run:"+str(run))
+    #printMap(energyState,"Run:"+str(run))
+    print("Run:"+str(run)+" Total threads:"+str(len(photons))+" Total Energized:"+str(scoreEnergyState(energyState)))
 
     # Any update to the energy state on this run?
-    if compareEnergyStates(oldEnergyState,energyState):
+        # if compareEnergyStates(oldEnergyState,energyState):
+        #     allDone=True
+        #     print("**** Exiting due to no change in energy state****")
+    
+    allStopped=True
+    for p in photons:
+        if p.direction!=Direction.Stopped:
+            allStopped=False
+            break
+        
+    if allStopped:
         allDone=True
-        print("**** Exiting due to no change in energy state****")
+        print("**** Exiting due to all threads stopped****")
 
     if run>=maxRuns:
         allDone=True
         print("**** Exiting due to too many Runs ****")
-        
+        pass
 
 print("**** RUN COMPLETE, final state is:")
 total=0
@@ -189,9 +241,5 @@ total=0
 print("Total Energized is: "+str(total))
 
 printMap(energyState,"Energy State")
-printMap(oldEnergyState,"Old Energy State")
-
-
-# TODO - need to solve the problem of photons boucing along the same
-# paths and thus not showing any updates to the energy states - makes
-# it difficult to identify the exit case.
+#printMap(oldEnergyState,"Old Energy State")
+print("Final energy state score:"+str(scoreEnergyState(energyState)))

@@ -1,7 +1,7 @@
 # https://www.redblobgames.com/pathfinding/a-star/introduction.html
 
 from enum import Enum
-
+import math
 testing=False
 
 # create an enum for the compass cardinal directions
@@ -21,25 +21,25 @@ def floodFill(m,candidates,v):
     c = candidates.pop(0)
     x=c[0] # columns
     y=c[1] # rows
-    if map[y][x]==0:
-        map[y][x]=v
+    if m[y][x]==0:
+        m[y][x]=v
 
     if x>0 and x<len(m[0])-1:
-        if map[y][x-1]==0:
+        if m[y][x-1]==0:
             newC=[x-1,y]
             if newC not in candidates:
                 candidates.append(newC)
-        if map[y][x+1]==0:
+        if m[y][x+1]==0:
             newC=[x+1,y]
             if newC not in candidates:
                 candidates.append(newC)
     
     if y>0 and y<len(m)-1:
-        if map[y-1][x]==0:
+        if m[y-1][x]==0:
             newC=[x,y-1]
             if newC not in candidates:
                 candidates.append(newC)
-        if map[y+1][x]==0:
+        if m[y+1][x]==0:
             newC=[x,y+1]
             if newC not in candidates:
                 candidates.append(newC)
@@ -142,6 +142,11 @@ lowc=0
 for c,l in enumerate(lines):
     print("-> Line = ",end="")
     print(lines[c])
+
+    # EXPERIMENT - scale down the whole image
+    # lines[c][1]=str(math.ceil(int(lines[c][1])/10))
+    # print(lines[c][1])
+
     if lines[c][0]=='U':
         for i in range(int(lines[c][1])):
             sr-=1

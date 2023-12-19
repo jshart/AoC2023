@@ -13,12 +13,6 @@ class Direction(Enum):
     West=4
     NoDirection=5
 
-def printMap(map):
-    for r in map:
-        print(r)
-    print("****")
-
-
 # TODO - I need to add the "cant travel in the same direction for more than 3 squares"
 # limitation, as well as only allowing to go right/left/forward.
 # Need some sort of direction history? Maybe backtrack along the trace matrix?
@@ -40,7 +34,7 @@ def searchPath(m,v):
         if m.trace[row][col-1]==0:                              # Have we visited this cell before?
             m.trace[row][col-1]=candidate                       # if not, track the path to this cell
             newCandidate=[row,col-1]                            # create a new candidate list for this cell 
-            v=m.map[row][col-1]                                 # get the weight from the map
+            v=m.costMap[row][col-1]                                 # get the weight from the map
             if newCandidate not in map.currentCandidateList[v]:   # is this candidate alread in the hashmap?
                 map.currentCandidateList[v].append(newCandidate)  # it isn't so add it.
 
@@ -49,7 +43,7 @@ def searchPath(m,v):
         if m.trace[row][col+1]==0:
             m.trace[row][col+1]=candidate
             newCandidate=[row,col+1]
-            v=m.map[row][col+1]
+            v=m.costMap[row][col+1]
             if newCandidate not in map.currentCandidateList[v]:
                 map.currentCandidateList[v].append(newCandidate)
     
@@ -58,7 +52,7 @@ def searchPath(m,v):
         if m.trace[row-1][col]==0:
             m.trace[row-1][col]=candidate
             newCandidate=[row-1,col]
-            v=m.map[row-1][col]
+            v=m.costMap[row-1][col]
             if newCandidate not in map.currentCandidateList[v]:
                 map.currentCandidateList[v].append(newCandidate)
 
@@ -67,7 +61,7 @@ def searchPath(m,v):
         if m.trace[row+1][col]==0:
             m.trace[row+1][col]=candidate
             newCandidate=[row+1,col]
-            v=m.map[row+1][col]
+            v=m.costMap[row+1][col]
             if newCandidate not in map.currentCandidateList[v]:
                 map.currentCandidateList[v].append(newCandidate)
             
@@ -83,20 +77,23 @@ else:
 
 class Map:
     def __init__(self,lines):
-        self.map=[]
+        self.costMap=[]
         self.trace=[]
+        #self.costToReach=[]
         for c,l in enumerate(lines):
             lines[c]=lines[c].strip()
             tempMapLine=list(lines[c])
             for c,t in enumerate(tempMapLine):
                 tempMapLine[c]=int(t)
-            self.map.append(tempMapLine)
+            self.costMap.append(tempMapLine)
             self.trace.append([0] * len(tempMapLine))
+            #self.costToReach.append([0] * len(tempMapLine))
+
 
         #self.printMap("Map Init")
 
-        self.targetRow=len(self.map)
-        self.targetCol=len(self.map[0])
+        self.targetRow=len(self.costMap)
+        self.targetCol=len(self.costMap[0])
 
         # Treat currentCandidateList as a hashmap - we create a seperate list
         # for each candidate who has a cost score 1-9
@@ -106,9 +103,9 @@ class Map:
 
     def printMap(self,s):
         print("** "+s+" **")
-        for r in range(len(self.map)):
-            for c in range(len(self.map[r])):
-                print(self.map[r][c],end="")
+        for r in range(len(self.costMap)):
+            for c in range(len(self.costMap[r])):
+                print(self.costMap[r][c],end="")
             print()
 
     def printTrace(self,s):
@@ -122,23 +119,39 @@ class Map:
         cost=0
         tRow=len(map.trace)-1
         tCol=len(map.trace[0])-1
-        cost+=map.map[tRow][tCol]
+        cost+=map.costMap[tRow][tCol]
 
         while tRow>0 or tCol>0:
             print(map.trace[tRow][tCol],end=" ")
             tRow=map.trace[tRow][tCol][0]
             tCol=map.trace[tRow][tCol][1]
-            cost+=map.map[tRow][tCol]
+            cost+=map.costMap[tRow][tCol]
         print(" Cost="+str(cost))
 
     def getShortestPathToTarget(self):
         result=[]
+
+        # start with a default "end" position
+        # of the bottom/right square (this looks
+        # like its working)
         tRow=len(map.trace)-1
         tCol=len(map.trace[0])-1
-        while tRow>0 or tCol>0:
-            tRow=map.trace[tRow][tCol][0]
-            tCol=map.trace[tRow][tCol][1]
-            result.append(map.trace[tRow][tCol])
+        result.append([tRow,tCol])
+        print("Adding:"+str(tRow)+","+str(tCol))
+
+
+        done=False
+        while not done:
+            newTRow=map.trace[tRow][tCol][0]
+            newTCol=map.trace[tRow][tCol][1]
+            print("Adding:"+str(newTRow)+","+str(newTCol))
+            result.append([newTRow,newTCol])
+
+            if newTRow<=0 and newTCol<=0:
+                done=True
+                
+            tRow=newTRow
+            tCol=newTCol
         return(result)
 
 
@@ -147,22 +160,12 @@ map.printMap("Initial State")
 print("**** DATA LOAD COMPLETE, starting run")
 
 print("valid paths test:")
-map.currentCandidateList[map.map[0][0]].append([0,0])
+map.currentCandidateList[map.costMap[0][0]].append([0,0])
 s=0
 maxSteps=100
 
 #for s in range(maxSteps):
 done=False
-while not done:
-    s+=1
-    searchPath(map,s)
-    #map.printTrace("Search Path test")
-
-    done=True
-    for c in map.currentCandidateList:
-        if len(c)>0:
-            done=False
-            break
 
 
 print("**** RUN COMPLETE, final state is:")
@@ -182,9 +185,12 @@ BACKGROUND = (255, 255, 255)
 # Game Setup
 FPS = 60
 if testing:
-    scale=10
+    scale=50
 else:
     scale=5
+
+hScale=math.ceil(scale/2)
+
 fpsClock = pygame.time.Clock()
 WINDOW_WIDTH = map.targetCol*scale
 WINDOW_HEIGHT = map.targetRow*scale
@@ -196,7 +202,7 @@ pygame.display.set_caption('AoC Display')
 # Render elements of the game
 WINDOW.fill(BACKGROUND)
 
-printOnce=True
+runOnce=True
 looping=True
  # The main game loop
 while looping:
@@ -211,36 +217,54 @@ while looping:
     green= (0,255,0)
     blue= (0,0,255)
     
+
+    if not done:
+        s+=1
+        searchPath(map,s)
+        #map.printTrace("Search Path test")
+
+        done=True
+        for c in map.currentCandidateList:
+            if len(c)>0:
+                done=False
+                break
+
     # Main draw loop
     for y,l in enumerate(map.trace):
         for x,c in enumerate(l):
-            # if c==1:
-            #     #pygame.draw.rect(WINDOW, color, pygame.Rect((x*scale)-1, (y*scale)-1, scale-1, scale-1))
-            #     pygame.draw.rect(WINDOW, red, pygame.Rect(x*scale, y*scale, scale, scale))
-            # elif c==2:
-            #     pygame.draw.rect(WINDOW, green, pygame.Rect(x*scale, y*scale, scale, scale))
-            # elif c==3:
-            #     pygame.draw.rect(WINDOW, blue, pygame.Rect(x*scale, y*scale, scale, scale))
 
-            #pygame.draw.rect(WINDOW, (math.floor(255/(c[0]+1)),0,0), pygame.Rect(x*scale, y*scale, scale, scale))
-            # draw a line from the centre of this cell, to the centre of the cell stored in the value of "C"
-            if c!=0:
+            g=math.floor(128/(map.costMap[y][x]+1))+127
+            if c==0:
+                pygame.draw.rect(WINDOW, (g,g,g), pygame.Rect(x*scale, y*scale, scale, scale))
+            else:
+                pygame.draw.rect(WINDOW, (0,g,0), pygame.Rect(x*scale, y*scale, scale, scale))
+                # draw a line from the centre of this cell, to the centre of the cell stored in the value of "C"
                 #print(c)
-                pygame.draw.line(WINDOW, (255,0,0), (x*scale+scale/2, y*scale+scale/2), (c[1]*scale+scale/2, c[0]*scale+scale/2))
+                #pygame.draw.line(WINDOW, (255,0,0), (x*scale+hScale, y*scale+hScale), (c[1]*scale+hScale, c[0]*scale+hScale))
+                pygame.draw.line(WINDOW, (255,0,0), (x*scale, y*scale), (c[1]*scale, c[0]*scale))
+
+    for cl in map.currentCandidateList:
+        for c in cl:
+            pygame.draw.rect(WINDOW, (255,255,0), pygame.Rect(c[1]*scale, c[0]*scale, scale, scale))
 
 
-    # TODO - I think there is some bugs with the drawing here, as it goes diagonal across blocks some times. I'm taking it on faith
-    # that CW got the co-ords right as well. (tbf - they do look consistent with above)
-    sPath=map.getShortestPathToTarget()
-    oldC=sPath[0]
-    for c in sPath:
-        if printOnce:
+    if done and runOnce:
+        # TODO - I think there is some bugs with the drawing here, as it goes diagonal across blocks some times. I'm taking it on faith
+        # that CW got the co-ords right as well. (tbf - they do look consistent with above)
+        sPath=map.getShortestPathToTarget()
+        for c in sPath:
             print(c)
-        # draw a line from centre of current cell, to the centre of the cell stored in the value of "C"
-        pygame.draw.line(WINDOW, (0,0,255), (oldC[1]*scale+scale/2, oldC[0]*scale+scale/2), (c[1]*scale+scale/2, c[0]*scale+scale/2))
-        oldC=c
 
-    printOnce=False
+        runOnce=False
+
+    if not runOnce:
+        oldC=sPath[0]
+        for c in sPath:
+            # draw a line from centre of current cell, to the centre of the cell stored in the value of "C"
+            #pygame.draw.line(WINDOW, (0,0,255), (oldC[1]*scale+hScale, oldC[0]*scale+hScale), (c[1]*scale+hScale, c[0]*scale+hScale))
+            pygame.draw.line(WINDOW, (0,0,255), (oldC[1]*scale, oldC[0]*scale), (c[1]*scale, c[0]*scale))
+
+            oldC=c
 
     #pygame.display.flip()
 

@@ -53,19 +53,28 @@ else:
     file1 = open('Day17/data/input.txt', 'r')
     lines = file1.readlines()
 
+class CellContents:
+    def __init__(self,w):
+        self.weight=w
+        self.costSoFar=0
+        self.backTrack=None
+
 class Map:
     def __init__(self,lines):
         self.costMap=[]
         self.trace=[]
-        #self.costToReach=[]
+        # Loop through the text input converting to the map
+        # as we parse
         for c,l in enumerate(lines):
             lines[c]=lines[c].strip()
             tempMapLine=list(lines[c])
+
+            # Convert all the values in the line into ints
             for c,t in enumerate(tempMapLine):
                 tempMapLine[c]=int(t)
+
             self.costMap.append(tempMapLine)
             self.trace.append([0] * len(tempMapLine))
-            #self.costToReach.append([0] * len(tempMapLine))
 
         self.targetRow=len(self.costMap)
         self.targetCol=len(self.costMap[0])

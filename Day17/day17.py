@@ -17,53 +17,31 @@ class Direction(Enum):
 # limitation, as well as only allowing to go right/left/forward.
 # Need some sort of direction history? Maybe backtrack along the trace matrix?
 def searchPath(m,v):
-    #print(candidates,end=" v:")
-    #print(v)
-
     # find the lowest number candidate
     for hashCandidates in map.currentCandidateList:
         if len(hashCandidates)>0:
             candidate = hashCandidates.pop(0)
             break
-    
-    row=candidate[0] # rows (y)
-    col=candidate[1] # columns (x)
 
-    # West?
-    if col>0 and col<len(m.trace[0])-1:
-        if m.trace[row][col-1]==0:                              # Have we visited this cell before?
-            m.trace[row][col-1]=candidate                       # if not, track the path to this cell
-            newCandidate=[row,col-1]                            # create a new candidate list for this cell 
-            v=m.costMap[row][col-1]                                 # get the weight from the map
-            if newCandidate not in map.currentCandidateList[v]:   # is this candidate alread in the hashmap?
-                map.currentCandidateList[v].append(newCandidate)  # it isn't so add it.
-
-    # East?     
-    if col>=0 and col<len(m.trace[0])-1:
-        if m.trace[row][col+1]==0:
-            m.trace[row][col+1]=candidate
-            newCandidate=[row,col+1]
-            v=m.costMap[row][col+1]
-            if newCandidate not in map.currentCandidateList[v]:
-                map.currentCandidateList[v].append(newCandidate)
-    
-    # North?
-    if row>0 and row<len(m.trace)-1:
-        if m.trace[row-1][col]==0:
-            m.trace[row-1][col]=candidate
-            newCandidate=[row-1,col]
-            v=m.costMap[row-1][col]
-            if newCandidate not in map.currentCandidateList[v]:
-                map.currentCandidateList[v].append(newCandidate)
-
-    # South?
-    if row>=0 and row<len(m.trace)-1:
-        if m.trace[row+1][col]==0:
-            m.trace[row+1][col]=candidate
-            newCandidate=[row+1,col]
-            v=m.costMap[row+1][col]
-            if newCandidate not in map.currentCandidateList[v]:
-                map.currentCandidateList[v].append(newCandidate)
+    # Check each of the neighbours to see if we are able to treat it as a next step
+    # in the path.
+    neighbours=[[0,-1],[0,+1],[-1,0],[+1,0]]
+    for n in neighbours:
+        row=candidate[0]+n[0]
+        col=candidate[1]+n[1]
+        if row>=0 and row<len(m.trace) and col>=0 and col<len(m.trace[0]):
+            # Have we visited this cell before?
+            if m.trace[row][col]==0:
+                # if not, track the path to this cell
+                m.trace[row][col]=candidate
+                # create a new candidate list for this cell
+                newCandidate=[row,col]
+                # get the weight from the map
+                v=m.costMap[row][col]
+                # is this candidate alread in the hashmap?
+                if newCandidate not in map.currentCandidateList[v]:
+                    # it isn't so add it.
+                    map.currentCandidateList[v].append(newCandidate)
             
 
 # load a text file
@@ -89,9 +67,6 @@ class Map:
             self.trace.append([0] * len(tempMapLine))
             #self.costToReach.append([0] * len(tempMapLine))
 
-
-        #self.printMap("Map Init")
-
         self.targetRow=len(self.costMap)
         self.targetCol=len(self.costMap[0])
 
@@ -101,32 +76,12 @@ class Map:
 
         self.targetFound=False
 
-    def printMap(self,s):
+    def printMap(self,s,m):
         print("** "+s+" **")
-        for r in range(len(self.costMap)):
-            for c in range(len(self.costMap[r])):
-                print(self.costMap[r][c],end="")
+        for r in range(len(m)):
+            for c in range(len(m[r])):
+                print(m[r][c],end="")
             print()
-
-    def printTrace(self,s):
-        print("** "+s+" **")
-        for r in range(len(self.trace)):
-            for c in range(len(self.trace[r])):
-                print(self.trace[r][c],end="|")
-            print()
-
-    def printShortestPathToTarget(self):
-        cost=0
-        tRow=len(map.trace)-1
-        tCol=len(map.trace[0])-1
-        cost+=map.costMap[tRow][tCol]
-
-        while tRow>0 or tCol>0:
-            print(map.trace[tRow][tCol],end=" ")
-            tRow=map.trace[tRow][tCol][0]
-            tCol=map.trace[tRow][tCol][1]
-            cost+=map.costMap[tRow][tCol]
-        print(" Cost="+str(cost))
 
     def getShortestPathToTarget(self):
         result=[]
@@ -156,7 +111,7 @@ class Map:
 
 
 map=Map(lines)
-map.printMap("Initial State")
+map.printMap("Initial State",map.costMap)
 print("**** DATA LOAD COMPLETE, starting run")
 
 print("valid paths test:")
@@ -167,13 +122,9 @@ maxSteps=100
 #for s in range(maxSteps):
 done=False
 
-
 print("**** RUN COMPLETE, final state is:")
 total=0
-
 print("Total is: "+str(total))
-
-#map.printShortestPathToTarget()
 
 import pygame, sys, random
 from pygame.locals import *
@@ -221,7 +172,6 @@ while looping:
     if not done:
         s+=1
         searchPath(map,s)
-        #map.printTrace("Search Path test")
 
         done=True
         for c in map.currentCandidateList:

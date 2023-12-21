@@ -200,9 +200,9 @@ while not done:
 
     print("FF state:"+summariseFlipFlops(modules))
 
-    if buttonPresses % 20 == 0:
-        print("Button heart beat:"+str(buttonPresses))
-        done=True
+    # if buttonPresses % 20 == 0:
+    #     print("Button heart beat:"+str(buttonPresses))
+    #     done=True
 
     buttonPresses+=1
 

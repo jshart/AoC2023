@@ -154,6 +154,12 @@ while True:
             elif c==Cell.Start:
                 pygame.draw.rect(WINDOW, red, pygame.Rect(x*scale, y*scale, scale, scale))
 
+    if s<1:
+        # Wait 5 seconds before starting animation
+        pygame.display.update()
+        pygame.time.wait(5000)
+
+
     if s<maxSteps:
         pygame.time.wait(500)
         print("Updating")

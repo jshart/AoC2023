@@ -13,36 +13,6 @@ class Direction(Enum):
     West=4
     NoDirection=5
 
-# TODO - I need to add the "cant travel in the same direction for more than 3 squares"
-# limitation, as well as only allowing to go right/left/forward.
-# Need some sort of direction history? Maybe backtrack along the trace matrix?
-def searchPath(m,v):
-    # find the lowest number candidate
-    for hashCandidates in map.currentCandidateList:
-        if len(hashCandidates)>0:
-            candidate = hashCandidates.pop(0)
-            break
-
-    # Check each of the neighbours to see if we are able to treat it as a next step
-    # in the path.
-    neighbours=[[0,-1],[0,+1],[-1,0],[+1,0]]
-    for n in neighbours:
-        row=candidate[0]+n[0]
-        col=candidate[1]+n[1]
-        if row>=0 and row<len(m.trace) and col>=0 and col<len(m.trace[0]):
-            # Have we visited this cell before?
-            if m.trace[row][col]==0:
-                # if not, track the path to this cell
-                m.trace[row][col]=candidate
-                # create a new candidate list for this cell
-                newCandidate=[row,col]
-                # get the weight from the map
-                v=m.costMap[row][col]
-                # is this candidate alread in the hashmap?
-                if newCandidate not in map.currentCandidateList[v]:
-                    # it isn't so add it.
-                    map.currentCandidateList[v].append(newCandidate)
-            
 
 # load a text file
 # read file input.txt into an array of strings
@@ -58,11 +28,17 @@ class CellContents:
         self.weight=w
         self.costSoFar=0
         self.backTrack=None
+        self.visited=False
 
-class Map:
+    def print(self):
+        print("Weight:"+str(self.weight),end="")
+        print(" Cost:"+str(self.costSoFar),end="")
+        print(" BackTrack:"+str(self.backTrack),end="")
+        print(" Visited:"+str(self.visited))
+
+class Grid:
     def __init__(self,lines):
-        self.costMap=[]
-        self.trace=[]
+        self.contents=[]
         # Loop through the text input converting to the map
         # as we parse
         for c,l in enumerate(lines):
@@ -70,26 +46,25 @@ class Map:
             tempMapLine=list(lines[c])
 
             # Convert all the values in the line into ints
-            for c,t in enumerate(tempMapLine):
-                tempMapLine[c]=int(t)
+            for c,w in enumerate(tempMapLine):
+                tempMapLine[c]=CellContents(int(w))
 
-            self.costMap.append(tempMapLine)
-            self.trace.append([0] * len(tempMapLine))
+            self.contents.append(tempMapLine)
 
-        self.targetRow=len(self.costMap)
-        self.targetCol=len(self.costMap[0])
+        self.targetRow=len(self.contents)
+        self.targetCol=len(self.contents[0])
 
         # Treat currentCandidateList as a hashmap - we create a seperate list
         # for each candidate who has a cost score 1-9
-        self.currentCandidateList=c=[[] for x in range(10)]
+        self.currentCandidateList=[]
 
         self.targetFound=False
 
-    def printMap(self,s,m):
+    def printMap(self,s):
         print("** "+s+" **")
-        for r in range(len(m)):
-            for c in range(len(m[r])):
-                print(m[r][c],end="")
+        for r in range(len(self.contents)):
+            for c in range(len(self.contents[r])):
+                print(self.contents[r][c].weight,end="")
             print()
 
     def getShortestPathToTarget(self):
@@ -98,16 +73,19 @@ class Map:
         # start with a default "end" position
         # of the bottom/right square (this looks
         # like its working)
-        tRow=len(map.trace)-1
-        tCol=len(map.trace[0])-1
+        tRow=len(self.contents)-1
+        tCol=len(self.contents[0])-1
         result.append([tRow,tCol])
         print("Adding:"+str(tRow)+","+str(tCol))
 
 
         done=False
         while not done:
-            newTRow=map.trace[tRow][tCol][0]
-            newTCol=map.trace[tRow][tCol][1]
+            if self.contents[tRow][tCol].backTrack==None:
+                break
+
+            newTRow=self.contents[tRow][tCol].backTrack[0]
+            newTCol=self.contents[tRow][tCol].backTrack[1]
             print("Adding:"+str(newTRow)+","+str(newTCol))
             result.append([newTRow,newTCol])
 
@@ -117,14 +95,94 @@ class Map:
             tRow=newTRow
             tCol=newTCol
         return(result)
+    
+    # TODO - I need to add the "cant travel in the same direction for more than 3 squares"
+    # limitation, as well as only allowing to go right/left/forward.
+    # Need some sort of direction history? Maybe backtrack along the matrix?
+    # TODO - rewrite the candidate list to use the new CellContents format, add in the
+    # total path cost, and redo the candidate sorting based on total path cost    
 
 
-map=Map(lines)
-map.printMap("Initial State",map.costMap)
+    # Candidate format = [costToDate,row,col,fromRow,fromCol]
+    def searchPath(self):
+
+        # PART 1: Lock in the new more favoured candidate
+
+        goodCandidateToTest=False
+        # We need to find a candidate that leads to a space we've either not visited
+        # or one that will visit a square that has already been visited, but via
+        # a shorter path, so is this a good candidate to test, or should we just
+        # drop it?
+        while not goodCandidateToTest:
+            # if we've run out of candidates then return
+            if len(self.currentCandidateList)==0:
+                return
+            # if we've got a candidate in the list, save it and pop it off the list            
+            newLocationBeingLocked=self.currentCandidateList.pop(0)
+
+            # is this a good candidate though?
+            if self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited==False:
+                # we haven't visited this location, so by default this is a good one to visit
+                goodCandidateToTest=True
+            elif self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar > newLocationBeingLocked[0]:
+                # the new path to this location is shorter than the current path
+                # to this location, so this is a good candidate to test
+                goodCandidateToTest=True
+            else:
+                print("Dropping candidate:",newLocationBeingLocked)
+
+
+        print("Locking in candidate:",newLocationBeingLocked)
+
+        # Lets update the current location based on this new candidate as it looks good
+        self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited=True
+        self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar=newLocationBeingLocked[0]
+        self.contents[newLocationBeingLocked[3]][newLocationBeingLocked[4]].backTrack=[newLocationBeingLocked[1],newLocationBeingLocked[2]]
+
+        if self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited==True and self.contents[newLocationBeingLocked[3]][newLocationBeingLocked[4]].backTrack==None:
+            print("ERROR - no backtrack for:",newLocationBeingLocked)
+            print("*** Tried to set it to:",[newLocationBeingLocked[1],newLocationBeingLocked[2]])
+
+
+        # PART 2: Generate new candidates for the next step in the path
+
+        # Check each of the neighbours to see if we are able to treat it as a next step
+        # in the path.
+        neighbours=[[0,-1],[0,+1],[-1,0],[+1,0]]
+        for n in neighbours:
+
+            # Based on the new location that we're locking in, lets generate a new candidate
+            # list.
+            candidateRow=newLocationBeingLocked[1]+n[0]
+            candidateCol=newLocationBeingLocked[2]+n[1]
+            if candidateRow>=0 and candidateRow<len(self.contents) and candidateCol>=0 and candidateCol<len(self.contents[0]):
+
+                # set the path cost to this point equal to the previous candidate
+                # cost path plus this candidate additional weight
+                newCostSoFar=self.contents[candidateRow][candidateCol].weight+self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar
+                print("New candidate cost so far:",newCostSoFar,self.contents[candidateRow][candidateCol].weight,self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar)
+
+                # Lets only add this as a candidate if we know that the path to the new location is better than
+                # any previous path that visited it:
+                if self.contents[candidateRow][candidateCol].visited==False:
+                    self.currentCandidateList.append([newCostSoFar,candidateRow,candidateCol,newLocationBeingLocked[1],newLocationBeingLocked[2]])
+                elif self.contents[candidateRow][candidateCol].costSoFar > newCostSoFar:
+                    self.currentCandidateList.append([newCostSoFar,candidateRow,candidateCol,newLocationBeingLocked[1],newLocationBeingLocked[2]])
+
+        # # New candidate list now needs to be sorted
+        # print("Candidate list is: ",self.currentCandidateList)
+        self.currentCandidateList.sort()
+        # print("Sorted candidate list is: ",self.currentCandidateList)
+
+
+
+map=Grid(lines)
+map.printMap("Initial State")
 print("**** DATA LOAD COMPLETE, starting run")
 
 print("valid paths test:")
-map.currentCandidateList[map.costMap[0][0]].append([0,0])
+w=map.contents[0][0].weight
+map.currentCandidateList.append([w,0,0,0,0])
 s=0
 maxSteps=100
 
@@ -180,31 +238,30 @@ while looping:
 
     if not done:
         s+=1
-        searchPath(map,s)
+        map.searchPath()
 
         done=True
-        for c in map.currentCandidateList:
-            if len(c)>0:
-                done=False
-                break
+        if len(map.currentCandidateList)!=0:
+            done=False
 
     # Main draw loop
-    for y,l in enumerate(map.trace):
+    for y,l in enumerate(map.contents):
         for x,c in enumerate(l):
 
-            g=math.floor(128/(map.costMap[y][x]+1))+127
-            if c==0:
+            g=math.floor(128/(map.contents[y][x].weight+1))+127
+            if c.visited==False:
                 pygame.draw.rect(WINDOW, (g,g,g), pygame.Rect(x*scale, y*scale, scale, scale))
             else:
                 pygame.draw.rect(WINDOW, (0,g,0), pygame.Rect(x*scale, y*scale, scale, scale))
                 # draw a line from the centre of this cell, to the centre of the cell stored in the value of "C"
                 #print(c)
                 #pygame.draw.line(WINDOW, (255,0,0), (x*scale+hScale, y*scale+hScale), (c[1]*scale+hScale, c[0]*scale+hScale))
-                pygame.draw.line(WINDOW, (255,0,0), (x*scale, y*scale), (c[1]*scale, c[0]*scale))
 
-    for cl in map.currentCandidateList:
-        for c in cl:
-            pygame.draw.rect(WINDOW, (255,255,0), pygame.Rect(c[1]*scale, c[0]*scale, scale, scale))
+            if c.backTrack!=None:
+                pygame.draw.line(WINDOW, (255,0,0), (x*scale, y*scale), (c.backTrack[1]*scale, c.backTrack[0]*scale))
+
+    for c in map.currentCandidateList:
+        pygame.draw.rect(WINDOW, (255,255,0), pygame.Rect(c[2]*scale, c[1]*scale, scale, scale))
 
 
     if done and runOnce:
@@ -216,6 +273,11 @@ while looping:
 
         runOnce=False
 
+        for r in range(len(map.contents)):
+            for c in range(len(map.contents[r])):
+                print("R/C:"+str(r)+"/"+str(c),end=" ")
+                map.contents[r][c].print()
+
     if not runOnce:
         oldC=sPath[0]
         for c in sPath:
@@ -224,6 +286,7 @@ while looping:
             pygame.draw.line(WINDOW, (0,0,255), (oldC[1]*scale, oldC[0]*scale), (c[1]*scale, c[0]*scale))
 
             oldC=c
+
 
     #pygame.display.flip()
 

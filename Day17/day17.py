@@ -129,15 +129,18 @@ class Grid:
                 # to this location, so this is a good candidate to test
                 goodCandidateToTest=True
             else:
-                print("Dropping candidate:",newLocationBeingLocked)
+                #print("Dropping candidate:",newLocationBeingLocked)
+                pass
 
-
-        print("Locking in candidate:",newLocationBeingLocked)
+        #print("Locking in candidate:",newLocationBeingLocked)
 
         # Lets update the current location based on this new candidate as it looks good
         self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited=True
         self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar=newLocationBeingLocked[0]
-        self.contents[newLocationBeingLocked[3]][newLocationBeingLocked[4]].backTrack=[newLocationBeingLocked[1],newLocationBeingLocked[2]]
+        
+        self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].backTrack=[newLocationBeingLocked[3],newLocationBeingLocked[4]]
+
+        #self.contents[newLocationBeingLocked[3]][newLocationBeingLocked[4]].backTrack=[newLocationBeingLocked[1],newLocationBeingLocked[2]]
 
         if self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited==True and self.contents[newLocationBeingLocked[3]][newLocationBeingLocked[4]].backTrack==None:
             print("ERROR - no backtrack for:",newLocationBeingLocked)
@@ -160,7 +163,7 @@ class Grid:
                 # set the path cost to this point equal to the previous candidate
                 # cost path plus this candidate additional weight
                 newCostSoFar=self.contents[candidateRow][candidateCol].weight+self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar
-                print("New candidate cost so far:",newCostSoFar,self.contents[candidateRow][candidateCol].weight,self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar)
+                #print("New candidate cost so far:",newCostSoFar,self.contents[candidateRow][candidateCol].weight,self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar)
 
                 # Lets only add this as a candidate if we know that the path to the new location is better than
                 # any previous path that visited it:

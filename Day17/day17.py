@@ -163,14 +163,19 @@ class Grid:
             
         
 
-    # TODO - I need to add the "cant travel in the same direction for more than 3 squares"
-    # limitation, as well as only allowing to go right/left/forward.
-    # Need some sort of direction history? Maybe backtrack along the matrix?
+    # TODO - Lets restructure this and change the code so that we only add
+    # candidates to the search list in the first place if we think they are
+    # better/viable - this simplifies the code and effectively reduces part1
+    # down to just a pop of head of the list.
 
     # Candidate format = [costToDate,row,col,fromRow,fromCol]
     def searchPath(self):
 
-        # PART 1: Lock in the new more favoured candidate
+        print("CC List Size:",len(self.currentCandidateList))
+
+        # PART 1: Lock in the new more favoured candidate, the candiate list is generated
+        # by the previous call to this function. It contains a sorted (by path cost) list of
+        # possible next nodes we can test. We now pick the first candidate off the list to test it
 
         goodCandidateToTest=False
         # We need to find a candidate that leads to a space we've either not visited
@@ -188,13 +193,17 @@ class Grid:
             if self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited==False:
                 # we haven't visited this location, so by default this is a good one to visit
                 goodCandidateToTest=True
-            elif self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar >= newLocationBeingLocked[0]:
+            elif self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar >=newLocationBeingLocked[0]:
                 # the new path to this location is shorter than the current path
                 # to this location, so this is a good candidate to test
                 goodCandidateToTest=True
             else:
                 #print("Dropping candidate:",newLocationBeingLocked)
                 pass
+
+
+        newLocationBeingLocked=self.currentCandidateList.pop(0)
+
 
         #print("Locking in candidate:",newLocationBeingLocked)
 
@@ -218,7 +227,7 @@ class Grid:
             # Does this candidate match the custom restrictions
             if self.customRestrictions(newLocationBeingLocked)==False:
                 # this does not, so drop it from the list
-                print("Dropping candidate:",n)
+                #print("Dropping candidate:",n)
                 continue
 
             # Based on the new location that we're locking in, lets generate a new candidate
@@ -227,20 +236,20 @@ class Grid:
             candidateCol=newLocationBeingLocked[2]+n[1]
             if candidateRow>=0 and candidateRow<len(self.contents) and candidateCol>=0 and candidateCol<len(self.contents[0]):
 
-                # set the path cost to this point equal to the previous candidate
-                # cost path plus this candidate additional weight
+                # The cost of using this candidate is equal to the cost so far, plus the additional weight of this candidate space
                 newCostSoFar=self.contents[candidateRow][candidateCol].weight+self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar
                 #print("New candidate cost so far:",newCostSoFar,self.contents[candidateRow][candidateCol].weight,self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar)
 
                 # Lets only add this as a candidate if we know that the path to the new location is better than
                 # any previous path that visited it:
-                if self.contents[candidateRow][candidateCol].visited==False or self.contents[candidateRow][candidateCol].costSoFar > newCostSoFar:
+                #if self.contents[candidateRow][candidateCol].visited==False or self.contents[candidateRow][candidateCol].costSoFar >= newCostSoFar:
+                if [newCostSoFar,candidateRow,candidateCol,newLocationBeingLocked[1],newLocationBeingLocked[2]] not in self.currentCandidateList:
                     self.currentCandidateList.append([newCostSoFar,candidateRow,candidateCol,newLocationBeingLocked[1],newLocationBeingLocked[2]])
 
         # # New candidate list now needs to be sorted
         # print("Candidate list is: ",self.currentCandidateList)
         self.currentCandidateList.sort()
-        # print("Sorted candidate list is: ",self.currentCandidateList)
+        print("Sorted candidate list is: ",self.currentCandidateList)
 
 
 
@@ -385,3 +394,8 @@ while looping:
 
     pygame.display.update()
     fpsClock.tick(FPS)
+
+
+    #826 is too high
+    #750 is too high
+    #600 is too low

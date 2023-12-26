@@ -2,7 +2,7 @@
 
 from enum import Enum
 import math
-testing=False
+testing=True
 
 # create an enum for the compass cardinal directions
 class Direction(Enum):
@@ -94,14 +94,78 @@ class Grid:
                 
             tRow=newTRow
             tCol=newTCol
-        return(result)
+        return result
     
+    def customRestrictions(self,c):
+        count=self.lastDirectionChange(c)
+        if count>2:
+            return False
+        else:
+            return True
+
+    def getCardinalDirection(self,c1,c2):
+        thisRow=c1[0]
+        thisCol=c1[1]
+        previousRow=c2[0]
+        previousCol=c2[1]
+        masterRowDelta=thisRow-previousRow
+        masterColDelta=thisCol-previousCol
+
+        if masterRowDelta==0 and masterColDelta>0:
+            return Direction.East
+        elif masterRowDelta==0 and masterColDelta<0:
+            return Direction.West
+        elif masterRowDelta>0 and masterColDelta==0:
+            return Direction.South
+        elif masterRowDelta<0 and masterColDelta==0:
+            return Direction.North
+        else:
+            return Direction.NoDirection
+
+    # Candidate format = [costToDate,row,col,fromRow,fromCol]
+    def lastDirectionChange(self,c):
+        thisRow=c[1]
+        thisCol=c[2]
+        previousRow=c[3]
+        previousCol=c[4]
+        masterRowDelta=thisRow-previousRow
+        masterColDelta=thisCol-previousCol
+
+        # print("Row Delta:"+str(masterRowDelta),end=" ")
+        # print("Col Delta:"+str(masterColDelta),end=" ")
+        count=0
+
+        done=False
+        while not done:
+            count+=1
+            thisRow=previousRow
+            thisCol=previousCol
+            previousRow=self.contents[thisRow][thisCol].backTrack[0]
+            previousCol=self.contents[thisRow][thisCol].backTrack[1]
+            # print("this Row:"+str(thisRow),end=" ")
+            # print("this Col:"+str(thisCol),end=" ")
+
+            nextRowDelta=thisRow-previousRow
+            nextColDelta=thisCol-previousCol
+
+            if thisRow==0 and thisCol==0:
+                # We've reached the start of the path
+                # print("Same directioin for:",count)
+                return count
+
+            if nextRowDelta==masterRowDelta and nextColDelta==masterColDelta:
+                # Still heading in the same direction
+                pass
+            else:
+                # We've changed direction, return the count
+                # print("Same directioin for:",count)
+                return count
+            
+        
+
     # TODO - I need to add the "cant travel in the same direction for more than 3 squares"
     # limitation, as well as only allowing to go right/left/forward.
     # Need some sort of direction history? Maybe backtrack along the matrix?
-    # TODO - rewrite the candidate list to use the new CellContents format, add in the
-    # total path cost, and redo the candidate sorting based on total path cost    
-
 
     # Candidate format = [costToDate,row,col,fromRow,fromCol]
     def searchPath(self):
@@ -124,7 +188,7 @@ class Grid:
             if self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited==False:
                 # we haven't visited this location, so by default this is a good one to visit
                 goodCandidateToTest=True
-            elif self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar > newLocationBeingLocked[0]:
+            elif self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar >= newLocationBeingLocked[0]:
                 # the new path to this location is shorter than the current path
                 # to this location, so this is a good candidate to test
                 goodCandidateToTest=True
@@ -137,10 +201,7 @@ class Grid:
         # Lets update the current location based on this new candidate as it looks good
         self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited=True
         self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar=newLocationBeingLocked[0]
-        
         self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].backTrack=[newLocationBeingLocked[3],newLocationBeingLocked[4]]
-
-        #self.contents[newLocationBeingLocked[3]][newLocationBeingLocked[4]].backTrack=[newLocationBeingLocked[1],newLocationBeingLocked[2]]
 
         if self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited==True and self.contents[newLocationBeingLocked[3]][newLocationBeingLocked[4]].backTrack==None:
             print("ERROR - no backtrack for:",newLocationBeingLocked)
@@ -153,6 +214,12 @@ class Grid:
         # in the path.
         neighbours=[[0,-1],[0,+1],[-1,0],[+1,0]]
         for n in neighbours:
+
+            # Does this candidate match the custom restrictions
+            if self.customRestrictions(newLocationBeingLocked)==False:
+                # this does not, so drop it from the list
+                print("Dropping candidate:",n)
+                continue
 
             # Based on the new location that we're locking in, lets generate a new candidate
             # list.
@@ -167,9 +234,7 @@ class Grid:
 
                 # Lets only add this as a candidate if we know that the path to the new location is better than
                 # any previous path that visited it:
-                if self.contents[candidateRow][candidateCol].visited==False:
-                    self.currentCandidateList.append([newCostSoFar,candidateRow,candidateCol,newLocationBeingLocked[1],newLocationBeingLocked[2]])
-                elif self.contents[candidateRow][candidateCol].costSoFar > newCostSoFar:
+                if self.contents[candidateRow][candidateCol].visited==False or self.contents[candidateRow][candidateCol].costSoFar > newCostSoFar:
                     self.currentCandidateList.append([newCostSoFar,candidateRow,candidateCol,newLocationBeingLocked[1],newLocationBeingLocked[2]])
 
         # # New candidate list now needs to be sorted
@@ -190,7 +255,7 @@ s=0
 maxSteps=100
 
 #for s in range(maxSteps):
-done=False
+doneSearchingForPath=False
 
 print("**** RUN COMPLETE, final state is:")
 total=0
@@ -202,7 +267,12 @@ pygame.init()
 
 # Colours
 BACKGROUND = (255, 255, 255)
- 
+# Initializing Color
+red = (255,0,0)
+green= (0,255,0)
+blue= (0,0,255)
+yellow = (255,255,0)
+
 # Game Setup
 FPS = 60
 if testing:
@@ -219,6 +289,8 @@ WINDOW_HEIGHT = map.targetRow*scale
 WINDOW = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption('AoC Display')
 
+bigFont = pygame.font.SysFont(None, math.floor(scale/2))
+smallFont = pygame.font.SysFont(None, math.floor(scale/4))
 
 # Render elements of the game
 WINDOW.fill(BACKGROUND)
@@ -233,19 +305,15 @@ while looping:
             pygame.quit()
             sys.exit()
 
-    # Initializing Color
-    red = (255,0,0)
-    green= (0,255,0)
-    blue= (0,0,255)
-    
 
-    if not done:
+
+    if not doneSearchingForPath:
         s+=1
         map.searchPath()
 
-        done=True
+        doneSearchingForPath=True
         if len(map.currentCandidateList)!=0:
-            done=False
+            doneSearchingForPath=False
 
     # Main draw loop
     for y,l in enumerate(map.contents):
@@ -261,32 +329,54 @@ while looping:
                 #pygame.draw.line(WINDOW, (255,0,0), (x*scale+hScale, y*scale+hScale), (c[1]*scale+hScale, c[0]*scale+hScale))
 
             if c.backTrack!=None:
-                pygame.draw.line(WINDOW, (255,0,0), (x*scale, y*scale), (c.backTrack[1]*scale, c.backTrack[0]*scale))
+                pygame.draw.line(WINDOW, red, (x*scale, y*scale), (c.backTrack[1]*scale, c.backTrack[0]*scale))
+
+                smallText="W:"+str(map.contents[y][x].weight)+" C:"+str(map.contents[y][x].costSoFar)
+                fImage = smallFont.render(smallText, True, blue)
+                WINDOW.blit(fImage, (x*scale, (y*scale)+math.floor(scale/2)))
 
     for c in map.currentCandidateList:
-        pygame.draw.rect(WINDOW, (255,255,0), pygame.Rect(c[2]*scale, c[1]*scale, scale, scale))
+        pygame.draw.rect(WINDOW, yellow, pygame.Rect(c[2]*scale, c[1]*scale, scale, scale))
 
 
-    if done and runOnce:
-        # TODO - I think there is some bugs with the drawing here, as it goes diagonal across blocks some times. I'm taking it on faith
-        # that CW got the co-ords right as well. (tbf - they do look consistent with above)
+    # This bit of code we want to run only once after we've finished searchig for
+    # for a path, because we want to be able to leave the final screen being repeatedly
+    # redrawn without constantly recomputing the shortest path
+    if doneSearchingForPath and runOnce:
         sPath=map.getShortestPathToTarget()
-        for c in sPath:
-            print(c)
+        sPath.reverse()
 
+        for i,c in enumerate(sPath):
+            print(c,end=" ")
+            if i<len(sPath)-1:
+                print(map.getCardinalDirection(sPath[i+1],sPath[i]))
+
+        tRow=len(map.contents)-1
+        tCol=len(map.contents[0])-1
+        print("Target is:",map.contents[tRow][tCol].costSoFar)
         runOnce=False
 
-        for r in range(len(map.contents)):
-            for c in range(len(map.contents[r])):
-                print("R/C:"+str(r)+"/"+str(c),end=" ")
-                map.contents[r][c].print()
 
-    if not runOnce:
+    if doneSearchingForPath:
         oldC=sPath[0]
-        for c in sPath:
+        for i,c in enumerate(sPath):
             # draw a line from centre of current cell, to the centre of the cell stored in the value of "C"
             #pygame.draw.line(WINDOW, (0,0,255), (oldC[1]*scale+hScale, oldC[0]*scale+hScale), (c[1]*scale+hScale, c[0]*scale+hScale))
-            pygame.draw.line(WINDOW, (0,0,255), (oldC[1]*scale, oldC[0]*scale), (c[1]*scale, c[0]*scale))
+            pygame.draw.line(WINDOW, blue, (oldC[1]*scale, oldC[0]*scale), (c[1]*scale, c[0]*scale))
+            pygame.draw.rect(WINDOW, yellow, pygame.Rect(c[1]*scale, c[0]*scale, scale, scale))
+
+            if i<len(sPath)-1:
+                dir=map.getCardinalDirection(sPath[i+1],sPath[i])
+
+                fImage = bigFont.render(dir.name, True, blue)
+                WINDOW.blit(fImage, (c[1]*scale, c[0]*scale))
+
+                smallText="W:"+str(map.contents[sPath[i][0]][sPath[i][1]].weight)+" C:"+str(map.contents[sPath[i][0]][sPath[i][1]].costSoFar)
+
+                #smallText="W:"+str(map.contents[sPath[i][0]][sPath[i][1]].weight)
+                fImage = smallFont.render(smallText, True, blue)
+                WINDOW.blit(fImage, (c[1]*scale, (c[0]*scale)+math.floor(scale/2)))
+
 
             oldC=c
 

@@ -3,6 +3,7 @@
 from enum import Enum
 import math
 testing=True
+singleStep=True
 
 # create an enum for the compass cardinal directions
 class Direction(Enum):
@@ -161,51 +162,19 @@ class Grid:
                 # print("Same directioin for:",count)
                 return count
             
-        
-
-    # TODO - Lets restructure this and change the code so that we only add
-    # candidates to the search list in the first place if we think they are
-    # better/viable - this simplifies the code and effectively reduces part1
-    # down to just a pop of head of the list.
 
     # Candidate format = [costToDate,row,col,fromRow,fromCol]
     def searchPath(self):
 
         print("CC List Size:",len(self.currentCandidateList))
 
-        # PART 1: Lock in the new more favoured candidate, the candiate list is generated
-        # by the previous call to this function. It contains a sorted (by path cost) list of
-        # possible next nodes we can test. We now pick the first candidate off the list to test it
-
-        goodCandidateToTest=False
-        # We need to find a candidate that leads to a space we've either not visited
-        # or one that will visit a square that has already been visited, but via
-        # a shorter path, so is this a good candidate to test, or should we just
-        # drop it?
-        while not goodCandidateToTest:
-            # if we've run out of candidates then return
-            if len(self.currentCandidateList)==0:
-                return
-            # if we've got a candidate in the list, save it and pop it off the list            
-            newLocationBeingLocked=self.currentCandidateList.pop(0)
-
-            # is this a good candidate though?
-            if self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited==False:
-                # we haven't visited this location, so by default this is a good one to visit
-                goodCandidateToTest=True
-            elif self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar >=newLocationBeingLocked[0]:
-                # the new path to this location is shorter than the current path
-                # to this location, so this is a good candidate to test
-                goodCandidateToTest=True
-            else:
-                #print("Dropping candidate:",newLocationBeingLocked)
-                pass
-
-
         newLocationBeingLocked=self.currentCandidateList.pop(0)
-
-
-        #print("Locking in candidate:",newLocationBeingLocked)
+        # is this candidate actually better than what we already have?
+        if self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited and newLocationBeingLocked[0] > self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar:
+            print("Not better than current candidate:",newLocationBeingLocked)
+            return
+        
+        print("Locking in candidate:",newLocationBeingLocked)
 
         # Lets update the current location based on this new candidate as it looks good
         self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited=True
@@ -217,18 +186,10 @@ class Grid:
             print("*** Tried to set it to:",[newLocationBeingLocked[1],newLocationBeingLocked[2]])
 
 
-        # PART 2: Generate new candidates for the next step in the path
-
         # Check each of the neighbours to see if we are able to treat it as a next step
         # in the path.
         neighbours=[[0,-1],[0,+1],[-1,0],[+1,0]]
         for n in neighbours:
-
-            # Does this candidate match the custom restrictions
-            if self.customRestrictions(newLocationBeingLocked)==False:
-                # this does not, so drop it from the list
-                #print("Dropping candidate:",n)
-                continue
 
             # Based on the new location that we're locking in, lets generate a new candidate
             # list.
@@ -238,18 +199,35 @@ class Grid:
 
                 # The cost of using this candidate is equal to the cost so far, plus the additional weight of this candidate space
                 newCostSoFar=self.contents[candidateRow][candidateCol].weight+self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar
-                #print("New candidate cost so far:",newCostSoFar,self.contents[candidateRow][candidateCol].weight,self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar)
+
+                # print("newCostSoFar:",newCostSoFar,end="")
+                # print(" candidateRow:",candidateRow,end="")
+                # print(" candidateCol:",candidateCol,end="")
+                # print(" weight:",self.contents[candidateRow][candidateCol].weight,end="")
+                # print(" fromRow:",newLocationBeingLocked[1],end="")
+                # print(" fromCol:",newLocationBeingLocked[2],end="")
+                # print(" costSoFar:",self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar)
+
+                # Does this candidate match the custom restrictions
+                if self.customRestrictions([newCostSoFar,candidateRow,candidateCol,newLocationBeingLocked[1],newLocationBeingLocked[2]])==False:
+                    # this does not, so drop it from the list
+                    #print("Dropping candidate:",n)
+                    continue
 
                 # Lets only add this as a candidate if we know that the path to the new location is better than
                 # any previous path that visited it:
-                #if self.contents[candidateRow][candidateCol].visited==False or self.contents[candidateRow][candidateCol].costSoFar >= newCostSoFar:
-                if [newCostSoFar,candidateRow,candidateCol,newLocationBeingLocked[1],newLocationBeingLocked[2]] not in self.currentCandidateList:
-                    self.currentCandidateList.append([newCostSoFar,candidateRow,candidateCol,newLocationBeingLocked[1],newLocationBeingLocked[2]])
+                tempCandidate=[newCostSoFar,candidateRow,candidateCol,newLocationBeingLocked[1],newLocationBeingLocked[2]]
+                if self.contents[candidateRow][candidateCol].visited==False: # or newCostSoFar < self.contents[candidateRow][candidateCol].costSoFar:
+                    if tempCandidate not in self.currentCandidateList:
+                        print("Adding candidate:",tempCandidate)
+                        print("\-> newCostSoFar:",newCostSoFar)
+                        print("\-> Existing cost so far:",self.contents[candidateRow][candidateCol].costSoFar,self.contents[candidateRow][candidateCol].visited)
+                        self.currentCandidateList.append(tempCandidate)
 
         # # New candidate list now needs to be sorted
         # print("Candidate list is: ",self.currentCandidateList)
         self.currentCandidateList.sort()
-        print("Sorted candidate list is: ",self.currentCandidateList)
+        print("\-> Sorted candidate list is: ",self.currentCandidateList)
 
 
 
@@ -308,18 +286,34 @@ runOnce=True
 looping=True
  # The main game loop
 while looping:
-    # Get inputs
+    # Get inputs - always be prepared to quit
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
 
+    # if we've activated single step mode, wait
+    # here until the user presses the space bar
+    while singleStep:
+        event = pygame.event.wait()
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == KEYDOWN:
+            if event.key == K_SPACE:
+                break
+            elif event.key == K_r:
+                singleStep=False
+                break
 
 
     if not doneSearchingForPath:
         s+=1
         map.searchPath()
 
+        # if the candidate list is empty, then we've run out of candidates to test and so the path
+        # finding is completed (hopefully successfully, but if there was no solution, we will have gone
+        # as far as we can)
         doneSearchingForPath=True
         if len(map.currentCandidateList)!=0:
             doneSearchingForPath=False
@@ -344,8 +338,12 @@ while looping:
                 fImage = smallFont.render(smallText, True, blue)
                 WINDOW.blit(fImage, (x*scale, (y*scale)+math.floor(scale/2)))
 
-    for c in map.currentCandidateList:
+    for i in range(len(map.currentCandidateList)-1,-1,-1):
+        c=map.currentCandidateList[i]
         pygame.draw.rect(WINDOW, yellow, pygame.Rect(c[2]*scale, c[1]*scale, scale, scale))
+        smallText="W:"+str(map.contents[c[1]][c[2]].weight)+" C:"+str(c[0])
+        fImage = smallFont.render(smallText, True, blue)
+        WINDOW.blit(fImage, (c[2]*scale, c[1]*scale+math.floor(scale/2)))
 
 
     # This bit of code we want to run only once after we've finished searchig for

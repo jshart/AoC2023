@@ -3,7 +3,7 @@
 from enum import Enum
 import math
 testing=True
-singleStep=True
+singleStep=False
 
 # create an enum for the compass cardinal directions
 class Direction(Enum):
@@ -29,6 +29,7 @@ class CellContents:
         self.weight=w
         self.costSoFar=0
         self.backTrack=None
+        self.forwardTrackDirection=Direction.NoDirection
         self.visited=False
 
     def print(self):
@@ -58,8 +59,6 @@ class Grid:
         # Treat currentCandidateList as a hashmap - we create a seperate list
         # for each candidate who has a cost score 1-9
         self.currentCandidateList=[]
-
-        self.targetFound=False
 
     def printMap(self,s):
         print("** "+s+" **")
@@ -104,6 +103,18 @@ class Grid:
         else:
             return True
 
+    def getDirToAscii(self,d):
+        if d==Direction.North:
+            return "^"
+        elif d==Direction.East:
+            return ">"
+        elif d==Direction.South:
+            return "v"
+        elif d==Direction.West:
+            return "<"
+        else:
+            return "?"
+        
     def getCardinalDirection(self,c1,c2):
         thisRow=c1[0]
         thisCol=c1[1]
@@ -159,27 +170,30 @@ class Grid:
                 pass
             else:
                 # We've changed direction, return the count
-                # print("Same directioin for:",count)
+                # print("Same direction for:",count)
                 return count
             
 
     # Candidate format = [costToDate,row,col,fromRow,fromCol]
     def searchPath(self):
 
-        print("CC List Size:",len(self.currentCandidateList))
+        #print("CC List Size:",len(self.currentCandidateList))
 
         newLocationBeingLocked=self.currentCandidateList.pop(0)
         # is this candidate actually better than what we already have?
         if self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited and newLocationBeingLocked[0] > self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar:
-            print("Not better than current candidate:",newLocationBeingLocked)
+            #print("Not better than current candidate:",newLocationBeingLocked)
             return
         
-        print("Locking in candidate:",newLocationBeingLocked)
+        #print("Locking in candidate:",newLocationBeingLocked)
 
         # Lets update the current location based on this new candidate as it looks good
         self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited=True
         self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].costSoFar=newLocationBeingLocked[0]
         self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].backTrack=[newLocationBeingLocked[3],newLocationBeingLocked[4]]
+
+        self.contents[newLocationBeingLocked[3]][newLocationBeingLocked[4]].forwardTrackDirection=self.getCardinalDirection([newLocationBeingLocked[1],newLocationBeingLocked[2]],[newLocationBeingLocked[3],newLocationBeingLocked[4]])
+
 
         if self.contents[newLocationBeingLocked[1]][newLocationBeingLocked[2]].visited==True and self.contents[newLocationBeingLocked[3]][newLocationBeingLocked[4]].backTrack==None:
             print("ERROR - no backtrack for:",newLocationBeingLocked)
@@ -213,21 +227,22 @@ class Grid:
                     # this does not, so drop it from the list
                     #print("Dropping candidate:",n)
                     continue
+                    #pass
 
                 # Lets only add this as a candidate if we know that the path to the new location is better than
                 # any previous path that visited it:
                 tempCandidate=[newCostSoFar,candidateRow,candidateCol,newLocationBeingLocked[1],newLocationBeingLocked[2]]
                 if self.contents[candidateRow][candidateCol].visited==False: # or newCostSoFar < self.contents[candidateRow][candidateCol].costSoFar:
                     if tempCandidate not in self.currentCandidateList:
-                        print("Adding candidate:",tempCandidate)
-                        print("\-> newCostSoFar:",newCostSoFar)
-                        print("\-> Existing cost so far:",self.contents[candidateRow][candidateCol].costSoFar,self.contents[candidateRow][candidateCol].visited)
+                        # print("Adding candidate:",tempCandidate)
+                        # print("\-> newCostSoFar:",newCostSoFar)
+                        # print("\-> Existing cost so far:",self.contents[candidateRow][candidateCol].costSoFar,self.contents[candidateRow][candidateCol].visited)
                         self.currentCandidateList.append(tempCandidate)
 
         # # New candidate list now needs to be sorted
         # print("Candidate list is: ",self.currentCandidateList)
         self.currentCandidateList.sort()
-        print("\-> Sorted candidate list is: ",self.currentCandidateList)
+        #print("\-> Sorted candidate list is: ",self.currentCandidateList)
 
 
 
@@ -237,7 +252,7 @@ print("**** DATA LOAD COMPLETE, starting run")
 
 print("valid paths test:")
 w=map.contents[0][0].weight
-map.currentCandidateList.append([w,0,0,0,0])
+map.currentCandidateList.append([w,0,0,0,0,Direction.NoDirection])
 s=0
 maxSteps=100
 
@@ -265,7 +280,7 @@ FPS = 60
 if testing:
     scale=50
 else:
-    scale=5
+    scale=6
 
 hScale=math.ceil(scale/2)
 
@@ -327,23 +342,24 @@ while looping:
                 pygame.draw.rect(WINDOW, (g,g,g), pygame.Rect(x*scale, y*scale, scale, scale))
             else:
                 pygame.draw.rect(WINDOW, (0,g,0), pygame.Rect(x*scale, y*scale, scale, scale))
-                # draw a line from the centre of this cell, to the centre of the cell stored in the value of "C"
-                #print(c)
-                #pygame.draw.line(WINDOW, (255,0,0), (x*scale+hScale, y*scale+hScale), (c[1]*scale+hScale, c[0]*scale+hScale))
-
-            if c.backTrack!=None:
-                pygame.draw.line(WINDOW, red, (x*scale, y*scale), (c.backTrack[1]*scale, c.backTrack[0]*scale))
-
-                smallText="W:"+str(map.contents[y][x].weight)+" C:"+str(map.contents[y][x].costSoFar)
-                fImage = smallFont.render(smallText, True, blue)
-                WINDOW.blit(fImage, (x*scale, (y*scale)+math.floor(scale/2)))
 
     for i in range(len(map.currentCandidateList)-1,-1,-1):
         c=map.currentCandidateList[i]
         pygame.draw.rect(WINDOW, yellow, pygame.Rect(c[2]*scale, c[1]*scale, scale, scale))
-        smallText="W:"+str(map.contents[c[1]][c[2]].weight)+" C:"+str(c[0])
-        fImage = smallFont.render(smallText, True, blue)
-        WINDOW.blit(fImage, (c[2]*scale, c[1]*scale+math.floor(scale/2)))
+        if testing:
+            smallText="W:"+str(map.contents[c[1]][c[2]].weight)+" C:"+str(c[0])
+            fImage = smallFont.render(smallText, True, blue)
+            WINDOW.blit(fImage, (c[2]*scale, c[1]*scale+math.floor(scale/2)))
+
+    for y,l in enumerate(map.contents):
+        for x,c in enumerate(l):
+            if c.backTrack!=None:
+                pygame.draw.line(WINDOW, red, (x*scale+hScale, y*scale+hScale), (c.backTrack[1]*scale+hScale, c.backTrack[0]*scale+hScale))
+
+                if testing:
+                    smallText="W:"+str(map.contents[y][x].weight)+" C:"+str(map.contents[y][x].costSoFar)+" "+map.getDirToAscii(map.contents[y][x].forwardTrackDirection)
+                    fImage = smallFont.render(smallText, True, blue)
+                    WINDOW.blit(fImage, (x*scale, (y*scale)+math.floor(scale/2)))
 
 
     # This bit of code we want to run only once after we've finished searchig for
@@ -369,7 +385,6 @@ while looping:
         for i,c in enumerate(sPath):
             # draw a line from centre of current cell, to the centre of the cell stored in the value of "C"
             #pygame.draw.line(WINDOW, (0,0,255), (oldC[1]*scale+hScale, oldC[0]*scale+hScale), (c[1]*scale+hScale, c[0]*scale+hScale))
-            pygame.draw.line(WINDOW, blue, (oldC[1]*scale, oldC[0]*scale), (c[1]*scale, c[0]*scale))
             pygame.draw.rect(WINDOW, yellow, pygame.Rect(c[1]*scale, c[0]*scale, scale, scale))
 
             if i<len(sPath)-1:
@@ -378,11 +393,13 @@ while looping:
                 fImage = bigFont.render(dir.name, True, blue)
                 WINDOW.blit(fImage, (c[1]*scale, c[0]*scale))
 
-                smallText="W:"+str(map.contents[sPath[i][0]][sPath[i][1]].weight)+" C:"+str(map.contents[sPath[i][0]][sPath[i][1]].costSoFar)
+                smallText="W:"+str(map.contents[sPath[i][0]][sPath[i][1]].weight)+" C:"+str(map.contents[sPath[i][0]][sPath[i][1]].costSoFar)+" "+map.getDirToAscii(map.contents[sPath[i][0]][sPath[i][1]].forwardTrackDirection)
 
                 #smallText="W:"+str(map.contents[sPath[i][0]][sPath[i][1]].weight)
                 fImage = smallFont.render(smallText, True, blue)
                 WINDOW.blit(fImage, (c[1]*scale, (c[0]*scale)+math.floor(scale/2)))
+
+            pygame.draw.line(WINDOW, blue, (oldC[1]*scale+hScale, oldC[0]*scale+hScale), (c[1]*scale+hScale, c[0]*scale+hScale))
 
 
             oldC=c
@@ -397,3 +414,6 @@ while looping:
     #826 is too high
     #750 is too high
     #600 is too low
+
+    #571 - current lowest count
+    #785 - is my current result based on my interpretation of the pathing
